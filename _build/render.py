@@ -132,15 +132,86 @@ def logo_svg(cls="", color="currentColor"):
 </svg>'''
 
 
+
+# -------------------------------------------------------------------- routes
+# One place that defines every URL on the site. Pages are emitted as folder
+# index.html files so the public URLs stay clean (/shop/, /our-story/), which
+# is what GitHub Pages, Netlify and Cloudflare Pages all serve natively.
+ROUTES = {
+    "home":     "",
+    "story":    "our-story/",
+    "impact":   "our-impact/",
+    "shop":     "shop/",
+    "how":      "how-it-works/",
+    "farmers":  "for-farmers/",
+    "careers":  "careers/",
+    "blog":     "blog/",
+    "contact":  "contact/",
+    "checkout": "checkout/",
+    "notfound": "404.html",
+}
+
+
+def route(name):
+    return ROUTES[name]
+
+
+def product_route(slug):
+    return f"products/{slug}/"
+
+
+def post_route(slug):
+    return f"blog/{slug}/"
+
+
+def page_path(name, slug=None):
+    """Where a page is written on disk (relative to the site root)."""
+    if name == "notfound":
+        return "404.html"          # must stay at the root for GitHub Pages
+    if name in ROUTES:
+        p = ROUTES[name]
+        return (p + "index.html") if p else "index.html"
+    if name == "product":
+        return f"products/{slug}/index.html"
+    if name == "post":
+        return f"blog/{slug}/index.html"
+    raise KeyError(name)
+
+
 # -------------------------------------------------------------- url helpers
 class Urls:
-    def __init__(self, base=""):
-        self.base = base
+    """Relative-URL builder. depth = how many folders below the site root.
 
-    def __call__(self, path):
-        if path.startswith(("http", "#", "mailto:", "tel:")):
+    depth 0 -> "" (root pages)          u("shop/")       -> "shop/"
+    depth 1 -> ".." (/shop/index.html)  u("shop/")       -> "../shop/"
+    depth 2 -> "../.." (product pages)  u("shop/")       -> "../../shop/"
+
+    Relative links (never "/absolute") so the site works both at a domain root
+    and inside a GitHub Pages project path such as /ApnaPan/.
+    """
+
+    def __init__(self, depth=0):
+        self.depth = depth if isinstance(depth, int) else len(depth.split("..")) - 1
+        self.base = "/".join([".."] * self.depth)
+
+    def __call__(self, path=""):
+        if path.startswith(("http", "#", "mailto:", "tel:", "data:")):
             return path
-        return f"{self.base}/{path}" if self.base else path
+        if not path:
+            # Home: "./" at the root, "../" one level down — never an empty href.
+            return (self.base + "/") if self.base else "./"
+        prefix = (self.base + "/") if self.base else ""
+        return prefix + path
+
+    # convenience so templates can stay readable
+    def page(self, name):
+        return self(route(name))
+
+    def product(self, slug):
+        return self(product_route(slug))
+
+    def post(self, slug):
+        return self(post_route(slug))
 
 
 # ------------------------------------------------------------------ meta/head
@@ -183,47 +254,85 @@ def head(title, desc, path, css_url, u, jsonld=None, extra=""):
 
 
 def header(active, u, cart_icon_count=True):
+    """Compact, fully functional header.
+
+    Row 1 — utility bar: free shipping · impact line · phone · For Farmers · Careers
+    Row 2 — brand · primary navigation · language · basket · (mobile) menu
+
+    Every item is a real link or button: <a> for navigation, <button> for the
+    menu and the language dropdown. Active state comes from `active` (a NAV key)
+    so "Home" is never hard-coded.
+    """
     nav_items = []
     for n in NAV:
-        cur = ' aria-current="page"' if n["key"] == active else ""
-        nav_items.append(f'<li><a class="nav__link" href="{u(n["href"])}"{cur} {A(n["key"])}>{T(n["key"])}</a></li>')
-    nav_items.append(f'<li class="nav__cta"><a class="btn btn--sm" href="{u("shop.html")}" {A("common.shop")}>{T("common.shop")}</a></li>')
+        key = n["route"]
+        is_current = (n["key"] == active)
+        cur = ' aria-current="page"' if is_current else ""
+        nav_items.append(
+            f'<li><a class="nav__link" href="{u(route(key))}"{cur} {A(n["key"])}>{T(n["key"])}</a></li>'
+        )
+    nav_links = "\n        ".join(nav_items)
+
     langs = "\n".join(
         f'<li><button type="button" data-lang="{l["code"]}" aria-pressed="{"true" if l["code"]=="en" else "false"}">'
         f'<span>{l["label"]}</span><span class="native">{l["native"]}</span></button></li>' for l in LANGS)
+
+    # Language block inside the mobile drawer — same buttons, same handler.
+    mobile_langs = "\n          ".join(
+        f'<li><button type="button" data-lang="{l["code"]}" aria-pressed="{"true" if l["code"]=="en" else "false"}">'
+        f'<span>{l["label"]}</span><span class="native">{l["native"]}</span></button></li>' for l in LANGS)
+
     return f'''
 <div class="topbar">
-  <div class="wrap">
-    <p class="topbar__msg">{icon("truck")}<span {A("common.freeship")}>{T("common.freeship")}</span> &nbsp;·&nbsp;
-      <span class="topbar__extra">{icon("women")} <span {A("home.hero.stamp")}>{T("home.hero.stamp")}</span></span></p>
+  <div class="wrap topbar__inner">
+    <p class="topbar__msg">
+      <span class="topbar__item">{icon("truck", size=14)}<span {A("common.freeship")}>{T("common.freeship")}</span></span>
+      <span class="topbar__sep" aria-hidden="true">·</span>
+      <span class="topbar__item topbar__extra">{icon("women", size=14)}<span {A("home.hero.stamp")}>{T("home.hero.stamp")}</span></span>
+    </p>
     <div class="topbar__actions">
-      <a href="tel:{BRAND["phone"]}">{icon("phone")} {BRAND["phone_display"]}</a>
-      <a class="topbar__extra" href="{u("farmers.html")}" {A("nav.farmers")}>{T("nav.farmers")}</a>
-      <a class="topbar__extra" href="{u("careers.html")}" {A("nav.careers")}>{T("nav.careers")}</a>
+      <a class="topbar__phone" href="tel:{BRAND["phone"]}" aria-label="Call {BRAND['phone_display']}">
+        {icon("phone", size=14)}<span>{BRAND["phone_display"]}</span>
+      </a>
+      <a class="topbar__extra" href="{u(route("farmers"))}" {A("nav.farmers")}>{T("nav.farmers")}</a>
+      <a class="topbar__extra" href="{u(route("careers"))}" {A("nav.careers")}>{T("nav.careers")}</a>
     </div>
   </div>
 </div>
 <header class="site-header" id="siteHeader">
   <div class="wrap header__inner">
-    <a class="brand" href="{u('index.html')}" aria-label="{BRAND['name']} — home">
+    <a class="brand" href="{u(route("home"))}" aria-label="{BRAND['name']} — home">
       {logo_svg("brand__mark", "#b4552d")}
       <span class="brand__text">
         <span class="brand__name">{BRAND["wordmark"]}</span>
         <span class="brand__tag">Real Food · True Care · Live More</span>
       </span>
     </a>
-    <nav class="nav" id="nav" aria-label="Main">
-      <button class="icon-btn nav__close" type="button" data-nav-close aria-label="{T('nav.close')}">{icon("close")}</button>
+
+    <nav class="nav" id="nav" aria-label="Main navigation">
+      <div class="nav__head">
+        <span class="nav__title">{T("nav.menu")}</span>
+        <button class="icon-btn nav__close" type="button" data-nav-close aria-label="{T('nav.close')}" aria-expanded="false">{icon("close")}</button>
+      </div>
       <ul class="nav__list">
-        {''.join(nav_items)}
+        {nav_links}
       </ul>
+      <div class="nav__lang">
+        <span class="nav__lang-title">{icon("globe", size=15)} <span {A("nav.language")}>{T("nav.language")}</span></span>
+        <ul class="nav__lang-list">{mobile_langs}</ul>
+      </div>
+      <a class="btn nav__cta" href="{u(route("shop"))}">{icon("cart")} <span {A("common.shop")}>{T("common.shop")}</span></a>
     </nav>
+
     <div class="header__tools">
       <div class="lang">
-        <button class="lang__btn" type="button" data-lang-btn aria-haspopup="true" aria-expanded="false" aria-label="{T('nav.language')}">
-          {icon("globe")}<span data-lang-current>EN</span>{icon("chev-d")}
+        <button class="lang__btn" type="button" data-lang-btn aria-haspopup="true" aria-expanded="false"
+                aria-controls="langMenu" aria-label="{T('nav.language')}">
+          {icon("globe", size=16)}<span data-lang-current>EN</span>{icon("chev-d", size=14)}
         </button>
-        <ul class="lang__menu" data-lang-menu>{langs}</ul>
+        <ul class="lang__menu" id="langMenu" data-lang-menu aria-label="{T('nav.language')}">
+          {langs}
+        </ul>
       </div>
       <button class="icon-btn cart-btn" type="button" data-cart-open aria-label="{T('cart.title')}" data-empty="true">
         {icon("cart")}<span class="cart-count" data-cart-count>0</span>
@@ -251,12 +360,12 @@ def marquee():
 
 
 def footer(u):
-    shop_links = "".join(f'<li><a href="{u("shop.html?cat=" + c["id"])}">{E(c["label"])}</a></li>' for c in live_categories())
+    shop_links = "".join(f'<li><a href="{u(route("shop") + "?cat=" + c["id"])}">{E(c["label"])}</a></li>' for c in live_categories())
     co_links = [
-        ("nav.story", "story.html"), ("nav.impact", "impact.html"), ("nav.how", "how-it-works.html"),
-        ("nav.blog", "blog.html"), ("nav.careers", "careers.html"), ("nav.farmers", "farmers.html"),
+        ("nav.story", "story"), ("nav.impact", "impact"), ("nav.how", "how"),
+        ("nav.blog", "blog"), ("nav.careers", "careers"), ("nav.farmers", "farmers"),
     ]
-    company = "".join(f'<li><a href="{u(h)}" {A(k)}>{T(k)}</a></li>' for k, h in co_links)
+    company = "".join(f'<li><a href="{u(route(h))}" {A(k)}>{T(k)}</a></li>' for k, h in co_links)
     socials = "".join(
         f'<a href="{s["url"]}" rel="noopener" aria-label="{s["name"]}" target="_blank">{icon(SOCIAL_ICON.get(s["icon"], "globe"))}</a>'
         for s in BRAND["social"])
@@ -284,8 +393,8 @@ def footer(u):
         <h4 {A("footer.shop")}>{T("footer.shop")}</h4>
         <ul class="footer__list">
           {shop_links}
-          <li><a href="{u("shop.html")}" {A("shop.all")}>{T("shop.all")}</a></li>
-          <li><a href="{u("shop.html")}" {A("con.gifting")}>{T("con.gifting")}</a></li>
+          <li><a href="{u(route("shop"))}" {A("shop.all")}>{T("shop.all")}</a></li>
+          <li><a href="{u(route("shop"))}" {A("con.gifting")}>{T("con.gifting")}</a></li>
         </ul>
       </div>
       <div>
@@ -298,18 +407,18 @@ def footer(u):
           <li><a href="tel:{BRAND['phone']}">{icon("phone")} {BRAND["phone_display"]}</a></li>
           <li><a href="mailto:{BRAND['emails']['hello']}">{E(BRAND["emails"]["hello"])}</a></li>
           <li>{E(", ".join(addr["lines"][:2]))}</li>
-          <li><a href="{u("contact.html")}" {A("con.visit")}>{T("con.visit")}</a></li>
-          <li><a href="{u("contact.html#csr")}" {A("con.csr")}>{T("con.csr")}</a></li>
-          <li><a href="{u("contact.html")}" {A("footer.returns")}>{T("footer.returns")}</a></li>
+          <li><a href="{u(route("contact"))}" {A("con.visit")}>{T("con.visit")}</a></li>
+          <li><a href="{u(route("contact") + "#csr")}" {A("con.csr")}>{T("con.csr")}</a></li>
+          <li><a href="{u(route("contact"))}" {A("footer.returns")}>{T("footer.returns")}</a></li>
         </ul>
       </div>
     </div>
     <div class="footer__bottom">
       <span>© {year} {E(BRAND["legal"])}. <span {A("footer.rights")}>{T("footer.rights")}</span> <span class="footer__credits">· {E(BRAND["reg"]["gstin"])}</span></span>
       <div class="footer__legal">
-        <a href="{u("contact.html")}" {A("footer.privacy")}>{T("footer.privacy")}</a>
-        <a href="{u("contact.html")}" {A("footer.terms")}>{T("footer.terms")}</a>
-        <a href="{u("impact.html")}" {A("footer.amenu")}>{T("footer.amenu")}</a>
+        <a href="{u(route("contact"))}" {A("footer.privacy")}>{T("footer.privacy")}</a>
+        <a href="{u(route("contact"))}" {A("footer.terms")}>{T("footer.terms")}</a>
+        <a href="{u(route("impact"))}" {A("footer.amenu")}>{T("footer.amenu")}</a>
       </div>
     </div>
     <p class="footer__credits" style="padding-bottom:1.4rem" {A("footer.demo")}>{T("footer.demo")}</p>
@@ -337,7 +446,9 @@ def drawer_and_widgets(u):
 <a class="wa-float" href="https://wa.me/{wa}" target="_blank" rel="noopener" aria-label="{T('a11y.whatsapp')}">{icon("whatsapp")}<span>WhatsApp</span></a>
 <button class="to-top" type="button" data-to-top aria-label="{T('a11y.totop')}">{icon("arrow-up")}</button>
 
+<script>window.APNAPAN_BASE = "{u.base}";</script>
 <script src="{u('assets/js/data.js')}"></script>
+<script src="{u('assets/js/i18n-data.js')}"></script>
 <script src="{u('assets/js/i18n.js')}"></script>
 <script src="{u('assets/js/app.js')}"></script>
 '''
@@ -381,14 +492,14 @@ def product_card(p, u, i18n_names=True):
     return f'''<article class="pcard" data-product-card data-slug="{p["slug"]}"
     data-cat="{p["category"]}" data-price="{p["price"]}" data-rating="{p["rating"]}"
     data-tags="{" ".join(p["tags"])}" data-diet="{"|".join(p["diet"]).lower()}" data-new="{1 if "new" in p["tags"] else 0}">
-  <a class="pcard__media" href="{u("products/" + p["slug"] + ".html")}" aria-label="{E(p["name"])}">
+  <a class="pcard__media" href="{u(product_route(p["slug"]))}" aria-label="{E(p["name"])}">
     <img src="{u(p["img"])}" alt="{E(p["name"])} — {E(p["type"])} by ApnaPan" loading="lazy" width="620" height="1029">
     <span class="pcard__flags">{flags}</span>
   </a>
   <button class="pcard__wish" type="button" data-wish="{p["slug"]}" aria-pressed="false" aria-label="Save {E(p['name'])}">{icon("heart")}</button>
   <div class="pcard__body">
     <span class="pcard__reg">{icon("leaf")} <span {A("common.farmdirect")}>{T("common.farmdirect")}</span> · <span {A(TYPE_KEY.get(p["type"], "")) if TYPE_KEY.get(p["type"]) else ""}>{E(p["type"])}</span></span>
-    <h3 class="pcard__title" style="font-size:1.06rem"><a href="{u("products/" + p["slug"] + ".html")}" data-pname="{p["slug"]}">{E(p["name"])}</a></h3>
+    <h3 class="pcard__title" style="font-size:1.06rem"><a href="{u(product_route(p["slug"]))}" data-pname="{p["slug"]}">{E(p["name"])}</a></h3>
     {rating_line(p, u)}
     <p class="small muted" style="margin-top:.15rem">{E(p["short"])}</p>
     <p class="pcard__by">{icon("women")} <span><span {A("common.madeby")}>{T("common.madeby")}</span>: <b>{E(p["made_by"]["name"])}</b></span></p>
@@ -473,8 +584,8 @@ def impact_band(u, title_key="home.impact.title", eyebrow_key="home.impact.eyebr
     {section_head(eyebrow_key, title_key, sub_key, center=True, light=True)}
     <div class="stat-grid mt-4">{stats}</div>
     <div class="btn-row btn-row--center mt-3">
-      <a class="btn btn--gold" href="{u("impact.html")}">{icon("sunrise")} <span {A("imp.report")}>{T("imp.report")}</span></a>
-      <a class="btn btn--light" href="{u("story.html")}">{icon("book")} <span {A("common.story")}>{T("common.story")}</span></a>
+      <a class="btn btn--gold" href="{u(route("impact"))}">{icon("sunrise")} <span {A("imp.report")}>{T("imp.report")}</span></a>
+      <a class="btn btn--light" href="{u(route("story"))}">{icon("book")} <span {A("common.story")}>{T("common.story")}</span></a>
     </div>
   </div>
 </section>'''
@@ -492,7 +603,7 @@ def breadcrumbs(items, u):
     parts = []
     for i, (label, href) in enumerate(items):
         if href:
-            parts.append(f'<a href="{u(href)}">{E(label)}</a>{icon("chev-r")}')
+            parts.append(f'<a href="{u(href)}">{E(label)}</a>{icon("chev-r", size=13)}')
         else:
             parts.append(f'<span aria-current="page">{E(label)}</span>')
     return f'<nav class="wrap breadcrumb" aria-label="Breadcrumb">{"".join(parts)}</nav>'

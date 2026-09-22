@@ -76,20 +76,22 @@ The same folder uploads as-is to Netlify, Cloudflare Pages, GitHub Pages, Vercel
 apnapan/
 ├── index.html                 Home — hero, problem→solution, featured products, impact counters,
 │                              farm-to-market journey, testimonials, press, newsletter
-├── story.html                 Our Story — the problem, the mission, founder's note, timeline, growth loop
-├── impact.html                Our Impact — women's employment, farmer partnerships, the Class 10 Fund,
+├── our-story/                 Our Story — problem, mission, founder's note, timeline, growth loop
+├── our-impact/                women's employment, farmer partnerships, the Class 10 Fund,
 │                              where every ₹100 goes, photo stories
-├── shop.html                  Shop — 8 products, filters (category / price / highlights / diet), sorting
-├── products/                  8 individual product pages (ingredients, sourcing farmer, nutrition,
+├── shop/                      Shop — 8 products, filters (category / price / highlights / diet), sorting
+├── products/<slug>/           8 individual product pages (ingredients, sourcing farmer, nutrition,
 │                              "meet the women who made this", reviews, related products)
-├── how-it-works.html          Sourcing → Processing → QC → Packaging → Distribution, batch traceability
-├── farmers.html               For Farmers — why partner, 4 steps, 2026–27 rate card, enquiry form, FAQs
-├── careers.html               6 open roles, benefits, application form, honest FAQs
-├── blog.html + blog/          5 full articles (sourcing economics, the education fund,
+├── how-it-works/              Sourcing → Processing → QC → Packaging → Distribution, batch traceability
+├── for-farmers/               For Farmers — why partner, 4 steps, 2026–27 rate card, enquiry form, FAQs
+├── careers/                   6 open roles, benefits, application form, honest FAQs
+├── blog/ + blog/<slug>/       5 full articles (sourcing economics, the education fund,
 │                              Byadagi chilli guide, pickle calendar, "what women-led means")
-├── contact.html               Contact, CSR & partnership desk, factory visit booking, map placeholder
-├── checkout.html              Cart → details → payment (Razorpay-ready, simulated fallback)
-├── 404.html · sitemap.xml · robots.txt
+├── contact/                   Contact, CSR & partnership desk, factory visit booking, map placeholder
+├── checkout/                  Cart → details → payment (Razorpay-ready, simulated fallback)
+├── 404.html · sitemap.xml · robots.txt · .nojekyll
+├── *.html  (10 files)         Legacy redirect stubs — story.html, farmers.html, shop.html, … keep old
+│                              links alive by meta-refresh + canonical to the new clean URL
 ├── serve.py                   Local server (python3 serve.py)
 ├── start-mac-linux.sh         Double-click launcher
 ├── start-windows.bat          Double-click launcher
@@ -97,18 +99,40 @@ apnapan/
 │   ├── css/styles.css         Design system (tokens, components, responsive, print)
 │   ├── css/fonts.css          Self-hosted webfonts (Marcellus, Inter, Noto Kannada/Devanagari)
 │   ├── fonts/*.woff2          7 files, 404 KB total
-│   ├── js/app.js              Cart, filters, tabs, counters, forms, checkout
-│   ├── js/i18n.js             Language switcher
+│   ├── js/app.js              Cart, filters, tabs, counters, forms, checkout, nav/drawer/dropdown
+│   ├── js/i18n.js             Language switcher (writes <html data-lang-active>)
 │   ├── js/i18n-data.js        Generated translations (312 strings × 3 languages)
 │   ├── js/data.js             Generated product catalogue + store config
 │   └── images/                16 images (hero, farm, factory, lab, children, 8 packshots)
 └── _build/                    The generator — edit content here, then rebuild
     ├── content.py             ← ALL products, people, numbers, jobs, posts, FAQs
     ├── i18n.py                ← ALL interface strings (en / kn / hi)
-    ├── render.py              Icons, page chrome, shared components
+    ├── render.py              Routes, URLs, icons, page chrome, shared components (incl. the header)
     ├── pages.py               The eleven page templates
-    └── build.py               Run this to regenerate the site
+    ├── build.py               Run this to regenerate the site
+    └── test_header.py / test_site.py   Browser test suites (see "Testing" below)
 ```
+
+### URLs
+
+Every page is a **folder route** (`/shop/`, `/our-story/`, `/products/nellikai-pickle/`) and every
+internal link is **relative** — no leading `/`. That means the same build works at a domain root
+(`https://apnapan.com/shop/`) *and* under a project path (`https://user.github.io/ApnaPan/shop/`)
+with no rebuild. The 10 legacy `.html` URLs still resolve via redirect stubs.
+
+Route table lives in `_build/render.py` (`ROUTES`, `route()`, `page_path()`). Add a page there and
+every nav/footer/sitemap reference follows.
+
+### Testing
+
+```bash
+python3 -m pip install playwright && python3 -m playwright install chromium
+cd apnapan && python3 serve.py 8000 --no-open &     # any static server works
+python3 _build/test_header.py     # 73 checks — header, nav, dropdown, drawer, keyboard, a11y
+python3 _build/test_site.py       # 168 checks — all 24 pages, links, cart, checkout, languages
+```
+
+Both suites exit non-zero on any failure. Use them after touching routing, assets or the header.
 
 ### Rebuilding after an edit
 
@@ -159,13 +183,13 @@ This is a **demonstration site**. Every name, number and quote was written for t
 - [ ] **Order confirmation** — the success panel is client-side only; wire real order IDs from your gateway.
 - [ ] **GST invoicing** — no invoice is generated. Add this if you sell B2B.
 - [ ] **Shipping rates** — flat ₹49 / free above ₹599, ₹25 COD fee: `js_data()` in `build.py`.
-- [ ] **Terms, privacy, returns** — currently these footer links point at `contact.html`. Add real policy pages.
+- [ ] **Terms, privacy, returns** — currently these footer links point at `contact/`. Add real policy pages.
 
 **Forms** (contact, careers, farmers, newsletter, review) validate and confirm on screen but do not submit anywhere. Point them at Formspree / Google Forms / your CRM / a serverless function. Each form has a `data-form="…"` attribute and a `demo.*` notice you can delete.
 
 **Also worth doing**
-- [ ] Replace the map placeholder in `contact.html` with a Google Maps embed (`<iframe>` inside `.map-frame`).
-- [ ] Link the batch-code lookup shown on `how-it-works.html` to a real endpoint, or label it "coming soon".
+- [ ] Replace the map placeholder in `contact/` with a Google Maps embed (`<iframe>` inside `.map-frame`).
+- [ ] Link the batch-code lookup shown on `how-it-works/` to a real endpoint, or label it "coming soon".
 - [ ] Add the last 4 whole-spice SKUs (turmeric, coriander, chilli powder, sambar powder) — the "Whole & Ground Spices" category is already defined in `content.py` and will appear in the filters automatically as soon as a product uses `"category": "whole"`.
 
 ---
@@ -174,7 +198,7 @@ This is a **demonstration site**. Every name, number and quote was written for t
 
 - Cart lives in `localStorage` (`apnapan_cart_v1`) as `{slug, size, qty}` lines; prices are looked up from `assets/js/data.js`, so editing a price needs only a rebuild.
 - The drawer, badge count, free-shipping progress bar and totals are rendered by `app.js`.
-- `checkout.html` collects contact + address + payment method, recalculates shipping and the COD fee, and shows the education-fund contribution of that order (6% of pre-tax value).
+- `checkout/` collects contact + address + payment method, recalculates shipping and the COD fee, and shows the education-fund contribution of that order (6% of pre-tax value).
 - Wishlist is also `localStorage` (`apnapan_wish_v1`) — currently a UI affordance with no account system behind it.
 
 ## 6. How the languages work
@@ -189,7 +213,7 @@ This is a **demonstration site**. Every name, number and quote was written for t
 
 ## 7. SEO, performance, accessibility
 
-**SEO** — unique title/description per page and product, canonical URLs, Open Graph + Twitter cards, keyword-targeted copy ("women-led spices", "farm to market pickles", "ethical sourcing India"), and JSON-LD for Organization, WebSite, Product (with price, rating and reviews), JobPosting, FAQPage, Blog/BlogPosting and BreadcrumbList. `sitemap.xml` and `robots.txt` are generated, with `/checkout.html` disallowed.
+**SEO** — unique title/description per page and product, canonical URLs, Open Graph + Twitter cards, keyword-targeted copy ("women-led spices", "farm to market pickles", "ethical sourcing India"), and JSON-LD for Organization, WebSite, Product (with price, rating and reviews), JobPosting, FAQPage, Blog/BlogPosting and BreadcrumbList. `sitemap.xml` and `robots.txt` are generated, with `/checkout/` disallowed.
 
 **Performance** — no frameworks, no CDN requests: ~64 KB of CSS (unminified), ~30 KB of app JS, 404 KB of fonts, and progressive JPEGs (roadmap imagery 100–270 KB each, packshots ~100 KB). Images carry `width`/`height` to prevent layout shift; below-the-fold images are lazy-loaded. Run `python3 -m http.server` locally, or upload as-is — a CDN or Cloudflare in front is all you need.
 

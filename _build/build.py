@@ -20,6 +20,7 @@ from content import BRAND, PRODUCTS, POSTS, IMPACT, FAQS_HOME           # noqa: 
 import render as R                                                      # noqa: E402
 import pages as P                                                       # noqa: E402
 from i18n import STR, LANGS, tree                                       # noqa: E402
+from render import ROUTES, product_route, post_route, page_path, route   # noqa: E402
 
 TODAY = "2026-09-22"
 
@@ -77,24 +78,66 @@ def favicon():
 
 
 def sitemap():
-    urls = [("index.html", "1.0"), ("story.html", "0.9"), ("impact.html", "0.9"), ("shop.html", "1.0"),
-            ("how-it-works.html", "0.8"), ("farmers.html", "0.8"), ("careers.html", "0.8"),
-            ("blog.html", "0.7"), ("contact.html", "0.7"), ("checkout.html", "0.2")]
+    urls = [("", "1.0"), ("our-story/", "0.9"), ("our-impact/", "0.9"), ("shop/", "1.0"),
+            ("how-it-works/", "0.8"), ("for-farmers/", "0.8"), ("careers/", "0.8"),
+            ("blog/", "0.7"), ("contact/", "0.7")]
     for p in PRODUCTS:
-        urls.append((f'products/{p["slug"]}.html', "0.9"))
+        urls.append((product_route(p["slug"]), "0.9"))
     for p in POSTS:
-        urls.append((f'blog/{p["slug"]}.html', "0.7"))
+        urls.append((post_route(p["slug"]), "0.7"))
     items = "\n".join(
         f'  <url><loc>{BRAND["url"]}/{u}</loc><lastmod>{TODAY}</lastmod><changefreq>weekly</changefreq><priority>{pr}</priority></url>'
         for u, pr in urls)
-    write("sitemap.xml", f'<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.w3.org/1999/xhtml/sitemap">\n'.replace(
-        'http://www.w3.org/1999/xhtml/sitemap', 'http://www.sitemaps.org/schemas/sitemap/0.9') + items + "\n</urlset>\n")
+    write("sitemap.xml", '<?xml version="1.0" encoding="UTF-8"?>\n'
+          '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' + items + "\n</urlset>\n")
     write("robots.txt", f"""# ApnaPan
 User-agent: *
 Allow: /
-Disallow: /checkout.html
+Disallow: /checkout/
 Sitemap: {BRAND['url']}/sitemap.xml
 """)
+
+
+def legacy_redirects():
+    """Old .html URLs keep working: every one 301s (via redirect stub) to its
+    clean route, so no bookmark, share link or stale search result 404s.
+    Delete this function and the stubs it writes if you never had live .html URLs."""
+    # Only the paths that were genuinely live before the routes changed.
+    pairs = [("index.html", route("home")), ("story.html", route("story")),
+             ("impact.html", route("impact")), ("shop.html", route("shop")),
+             ("how-it-works.html", route("how")), ("farmers.html", route("farmers")),
+             ("careers.html", route("careers")), ("blog.html", route("blog")),
+             ("contact.html", route("contact")), ("checkout.html", route("checkout"))]
+    for p in PRODUCTS:
+        pairs.append((f'products/{p["slug"]}.html', product_route(p["slug"])))
+    for p in POSTS:
+        pairs.append((f'blog/{p["slug"]}.html', post_route(p["slug"])))
+
+    count = 0
+    for old, new in pairs:
+        if not new:
+            continue
+        depth = old.count("/")
+        rel = ("../" * depth) + new            # relative hop from the old file
+        full = f'{BRAND["url"]}/{new}'
+        stub = f"""<!DOCTYPE html>
+<html lang="en-IN">
+<head>
+<meta charset="utf-8">
+<title>Moved — {BRAND["name"]}</title>
+<link rel="canonical" href="{full}">
+<meta name="robots" content="noindex, follow">
+<meta http-equiv="refresh" content="0; url={rel}">
+<script>location.replace("{rel}" + location.hash);</script>
+</head>
+<body>
+<p>This page has moved to <a href="{rel}">{full}</a>.</p>
+</body>
+</html>
+"""
+        write(old, stub)
+        count += 1
+    print(f"  ({count} legacy .html paths redirect to clean routes)")
 
 
 def main():
@@ -104,25 +147,26 @@ def main():
     js_data()
     print("assets")
     favicon()
+    write(".nojekyll", "")   # stop GitHub Pages from running Jekyll on the output
     print("pages")
-    write("index.html", P.home(R.Urls("")))
-    write("story.html", P.story(R.Urls("")))
-    write("impact.html", P.impact(R.Urls("")))
-    write("shop.html", P.shop(R.Urls("")))
-    write("how-it-works.html", P.how_it_works(R.Urls("")))
-    write("careers.html", P.careers(R.Urls("")))
-    write("farmers.html", P.farmers(R.Urls("")))
-    write("blog.html", P.blog(R.Urls("")))
-    write("contact.html", P.contact(R.Urls("")))
-    write("checkout.html", P.checkout(R.Urls("")))
-    write("404.html", P.not_found(R.Urls("")))
+    pages = [
+        ("home",     P.home,     0), ("story",  P.story,  1), ("impact", P.impact, 1),
+        ("shop",     P.shop,     1), ("how",    P.how_it_works, 1),
+        ("farmers",  P.farmers,  1), ("careers", P.careers, 1),
+        ("blog",     P.blog,     1), ("contact", P.contact, 1), ("checkout", P.checkout, 1),
+    ]
+    for name, fn, depth in pages:
+        write(page_path(name), fn(R.Urls(depth)))
+    write(page_path("notfound"), P.not_found(R.Urls(0)))
     for p in PRODUCTS:
-        write(f'products/{p["slug"]}.html', P.product(R.Urls(".."), p))
+        write(page_path("product", p["slug"]), P.product(R.Urls(2), p))
     for p in POSTS:
-        write(f'blog/{p["slug"]}.html', P.post_page(R.Urls(".."), p))
+        write(page_path("post", p["slug"]), P.post_page(R.Urls(2), p))
+    print("redirects")
+    legacy_redirects()
     sitemap()
     print("-" * 72)
-    print(f"Built {11 + len(PRODUCTS) + len(POSTS)} pages · {len(PRODUCTS)} products · "
+    print(f"Built {10 + len(PRODUCTS) + len(POSTS)} routed pages · {len(PRODUCTS)} products · "
           f"{len(POSTS)} posts · {len(STR)} UI strings × {len(LANGS)} languages")
 
 

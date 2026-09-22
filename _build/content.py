@@ -13,8 +13,9 @@ BRAND = {
     "legal": "ApnaPan Foods Pvt. Ltd.",
     "founded": 2019,
     "pitch": "Farm-direct spices, masalas and pickles — made by a women-run factory, and every jar funds a child's education.",
-    "domain": "apnapan.in",
-    "url": "https://www.apnapan.in",
+    "domain": "akshayy2255.github.io/ApnaPan",
+    # Where the site is published. Change this to your own domain when you have one.
+    "url": "https://akshayy2255.github.io/ApnaPan",
     "phone_display": "+91 90000 00000",
     "phone": "+919000000000",
     "whatsapp": "919000000000",
@@ -44,16 +45,19 @@ BRAND = {
     },
 }
 
+# Every navigation entry is a real route. ROUTES (see render.py) resolves these to
+# clean URLs such as /shop/ and /our-story/, served from a folder index.html.
+# Nothing here is decorative and nothing points at a page that does not exist.
 NAV = [
-    {"key": "nav.home", "href": "index.html"},
-    {"key": "nav.story", "href": "story.html"},
-    {"key": "nav.impact", "href": "impact.html"},
-    {"key": "nav.shop", "href": "shop.html"},
-    {"key": "nav.how", "href": "how-it-works.html"},
-    {"key": "nav.farmers", "href": "farmers.html"},
-    {"key": "nav.careers", "href": "careers.html"},
-    {"key": "nav.blog", "href": "blog.html"},
-    {"key": "nav.contact", "href": "contact.html"},
+    {"key": "nav.home", "route": "home"},
+    {"key": "nav.story", "route": "story"},
+    {"key": "nav.impact", "route": "impact"},
+    {"key": "nav.shop", "route": "shop"},
+    {"key": "nav.how", "route": "how"},
+    {"key": "nav.farmers", "route": "farmers"},
+    {"key": "nav.careers", "route": "careers"},
+    {"key": "nav.blog", "route": "blog"},
+    {"key": "nav.contact", "route": "contact"},
 ]
 
 # ---------------------------------------------------------------- categories

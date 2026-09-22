@@ -18,6 +18,9 @@
 
   /* ------------------------------------------------------------- helpers */
   function $(s, r) { return (r || document).querySelector(s); }
+  /* Build a site-relative URL that works at a domain root AND inside a
+     GitHub Pages project path (/ApnaPan/). BASE is "", "..", or "../..". */
+  function url(p) { return (BASE ? BASE + '/' : '') + p; }
   function $$(s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); }
   function money(n) { return '₹' + Number(n).toLocaleString('en-IN'); }
 
@@ -110,7 +113,7 @@
         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">' +
         '<circle cx="9.5" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M2 3h2.3l2.5 11.1a2 2 0 0 0 2 1.6h8.6a2 2 0 0 0 1.9-1.4L21 7H5"/></svg>' +
         '<p><b>' + t('cart.empty') + '</b></p><p class="small">' + t('cart.emptysub') + '</p>' +
-        '<a class="btn mt-2" href="' + BASE + '/shop.html">' + t('common.shop') + '</a></div>';
+        '<a class="btn mt-2" href="' + url('shop/') + '">' + t('common.shop') + '</a></div>';
       if (foot) foot.hidden = true;
       return;
     }
@@ -122,7 +125,7 @@
       : '<div class="ship-bar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg><span>' + t('cart.shipdone') + '</span></div>';
 
     body.innerHTML = shipHtml + lines.map(function (l) {
-      var img = l.p.img.indexOf('http') === 0 ? l.p.img : BASE + '/' + l.p.img;
+      var img = url(l.p.img);
       return '<div class="cart-line">' +
         '<img src="' + img + '" alt="' + l.p.name + '" width="72" height="84">' +
         '<div><p class="cart-line__title">' + pname(l.p) + '</p>' +
@@ -142,7 +145,7 @@
         '<div class="summary-row"><span>' + t('common.subtotal') + '</span><span>' + money(sub) + '</span></div>' +
         '<div class="summary-row"><span>' + t('cart.ship') + '</span><span>' + (ship ? money(ship) : t('cart.free')) + '</span></div>' +
         '<div class="summary-row summary-row--total"><span>' + t('common.total') + '</span><span>' + money(sub + ship) + '</span></div>' +
-        '<a class="btn btn--lg btn--block mt-2" href="' + BASE + '/checkout.html">' + t('cart.checkout') + '</a>' +
+        '<a class="btn btn--lg btn--block mt-2" href="' + url('checkout/') + '">' + t('cart.checkout') + '</a>' +
         '<button class="btn btn--ghost btn--sm btn--block mt-1" type="button" data-cart-clear>' + t('cart.clear') + '</button>';
     }
   }
@@ -171,7 +174,7 @@
     if ((el = e.target.closest('[data-buy]'))) {
       e.preventDefault();
       addToCart(el.getAttribute('data-buy'), parseInt(el.getAttribute('data-size') || '0', 10), 1);
-      setTimeout(function () { location.href = BASE + '/checkout.html'; }, 220);
+      setTimeout(function () { location.href = url('checkout/'); }, 220);
       return;
     }
     if ((el = e.target.closest('[data-cart-open]'))) { e.preventDefault(); openDrawer(); return; }
@@ -225,33 +228,88 @@
   });
 
   /* -------------------------------------------------------- mobile nav */
-  var nav = $('[data-nav]') || $('#nav'), scrim = $('[data-scrim]');
+  var nav = $('#nav'), navScrim = $('[data-scrim]');
   function setNav(open) {
     if (!nav) return;
     nav.setAttribute('data-open', open ? 'true' : 'false');
-    if (scrim) scrim.setAttribute('data-open', open ? 'true' : 'false');
-    var b = $('[data-nav-open]'); if (b) b.setAttribute('aria-expanded', open ? 'true' : 'false');
+    if (navScrim) navScrim.setAttribute('data-open', open ? 'true' : 'false');
+    var b = $('[data-nav-open]'), c = $('[data-nav-close]');
+    if (b) b.setAttribute('aria-expanded', open ? 'true' : 'false');
+    if (c) c.setAttribute('aria-expanded', open ? 'true' : 'false');
     document.body.style.overflow = open ? 'hidden' : '';
+    if (open) { var first = nav.querySelector('.nav__link'); }
   }
   $$('[data-nav-open]').forEach(function (b) { b.addEventListener('click', function () { setNav(true); }); });
   $$('[data-nav-close]').forEach(function (b) { b.addEventListener('click', function () { setNav(false); }); });
-  if (scrim) scrim.addEventListener('click', function () { setNav(false); });
-  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { setNav(false); closeDrawer(); closeLang(); } });
+  if (navScrim) navScrim.addEventListener('click', function () { setNav(false); });
+  // Tapping any link inside the drawer closes it (important for same-page anchors).
+  if (nav) nav.addEventListener('click', function (e) { if (e.target.closest('a')) setNav(false); });
+  // Tap anywhere outside the open drawer to close it (the scrim alone cannot
+  // cover the sticky header, which paints above it).
+  document.addEventListener('click', function (e) {
+    if (!nav || nav.getAttribute('data-open') !== 'true') return;
+    if (nav.contains(e.target)) return;                 // inside the drawer
+    if (e.target.closest('[data-nav-open]')) return;     // the burger toggles itself
+    setNav(false);
+  });
+
+  // Desktop resize should never leave the drawer state stuck on.
+  window.addEventListener('resize', function () { if (window.innerWidth > 1100) setNav(false); });
 
   /* --------------------------------------------------------- language UI */
-  function closeLang() { var m = $('[data-lang-menu]'); if (m) m.setAttribute('data-open', 'false'); var b = $('[data-lang-btn]'); if (b) b.setAttribute('aria-expanded', 'false'); }
-  var langBtn = $('[data-lang-btn]');
+  var langWrap = $('.lang'), langBtn = $('[data-lang-btn]'), langMenu = $('[data-lang-menu]');
+  function langItems() { return langMenu ? $$('button', langMenu) : []; }
+  function openLang(open) {
+    if (!langMenu || !langBtn) return;
+    langMenu.setAttribute('data-open', open ? 'true' : 'false');
+    langBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+  function langIsOpen() { return langMenu && langMenu.getAttribute('data-open') === 'true'; }
   if (langBtn) {
-    langBtn.addEventListener('click', function () {
-      var m = $('[data-lang-menu]');
-      var open = m.getAttribute('data-open') !== 'true';
-      m.setAttribute('data-open', open ? 'true' : 'false');
-      langBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    langBtn.addEventListener('click', function (e) { e.stopPropagation(); openLang(!langIsOpen()); });
+    langBtn.addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault(); openLang(true);
+        var items = langItems(); if (items.length) items[e.key === 'ArrowDown' ? 0 : items.length - 1].focus();
+      }
     });
   }
+  if (langMenu) {
+    langMenu.addEventListener('keydown', function (e) {
+      var items = langItems(), i = items.indexOf(document.activeElement);
+      if (e.key === 'Escape') { openLang(false); if (langBtn) langBtn.focus(); return; }
+      if (e.key === 'ArrowDown') { e.preventDefault(); (items[i + 1] || items[0]).focus(); }
+      if (e.key === 'ArrowUp') { e.preventDefault(); (items[i - 1] || items[items.length - 1]).focus(); }
+      if (e.key === 'Home') { e.preventDefault(); items[0].focus(); }
+      if (e.key === 'End') { e.preventDefault(); items[items.length - 1].focus(); }
+      if (e.key === 'Enter' || e.key === ' ') { if (i > -1) { e.preventDefault(); items[i].click(); } }
+    });
+  }
+  // Click outside closes. (Selecting a language is handled in i18n.js; we just close.)
   document.addEventListener('click', function (e) {
-    if ((e.target.closest('[data-lang]'))) { closeLang(); }
-    else if (!e.target.closest('.lang')) { closeLang(); }
+    if (!langIsOpen()) return;
+    if (langWrap && langWrap.contains(e.target)) return;
+    openLang(false);
+  });
+  document.addEventListener('focusin', function (e) {
+    if (!langIsOpen()) return;
+    if (langWrap && langWrap.contains(e.target)) return;
+    openLang(false);
+  });
+
+  // Choosing a language closes the dropdown and the mobile drawer.
+  document.addEventListener('click', function (e) {
+    if (e.target.closest('button[data-lang]')) { openLang(false); setNav(false); }
+  });
+
+  // Global Escape: close whatever overlay is open, whichever control has focus.
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape' && e.key !== 'Esc') return;
+    var wasOpen = langIsOpen();
+    openLang(false);
+    setNav(false);
+    closeDrawer();
+    if (wasOpen && langBtn) langBtn.focus();
   });
 
   /* ----------------------------------------------------- shop filtering */
@@ -413,10 +471,10 @@
     var lines = cartLines(), sub = cartSubtotal();
     var cod = (document.querySelector('[name="payment"]:checked') || {}).value === 'cod';
     if (!lines.length) {
-      box.innerHTML = '<p class="muted small">' + t('cart.empty') + ' <a href="' + BASE + '/shop.html">' + t('common.shop') + '</a></p>';
+      box.innerHTML = '<p class="muted small">' + t('cart.empty') + ' <a href="' + url('shop/') + '">' + t('common.shop') + '</a></p>';
     } else {
       box.innerHTML = lines.map(function (l) {
-        var img = l.p.img.indexOf('http') === 0 ? l.p.img : BASE + '/' + l.p.img;
+        var img = url(l.p.img);
         return '<div class="os-line"><img src="' + img + '" alt=""><div>' +
           '<p class="os-line__t">' + pname(l.p) + '</p><p class="os-line__m">' + l.size.label + ' · × ' + l.qty + '</p></div>' +
           '<span>' + money(l.lineTotal) + '</span></div>';

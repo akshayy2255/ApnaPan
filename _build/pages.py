@@ -3,7 +3,8 @@
 from content import (BRAND, PRODUCTS, TESTIMONIALS, TIMELINE, IMPACT, ALLOCATION, EDUCATION,
                      FARMER_WHY, FARMER_STEPS, FARMER_FAQ, JOBS, BENEFITS, CAREER_FAQ,
                      POSTS, FAQS_HOME, FAQS_SHIPPING, TRUST_BADGES, CATEGORIES)
-from render import (T, Traw, A, AP, E, icon, live_categories, mark, TYPE_KEY, SPICE_KEY, DIET_KEY, BADGE_KEY, logo_svg, head, header, marquee, footer, section_head,
+from render import (T, Traw, A, AP, E, icon, live_categories, mark, TYPE_KEY, SPICE_KEY, DIET_KEY, BADGE_KEY,
+                    route, product_route, post_route, logo_svg, head, header, marquee, footer, section_head,
                     stars, rating_line, product_card, stat_card, badge_card, quote_card, faq_block,
                     check_list, newsletter_block, impact_band, trust_strip, breadcrumbs,
                     ld_org, ld_product, ld_faq, ld_breadcrumb, Urls)
@@ -28,8 +29,8 @@ def home(u):
         <span class="line-2" {A("home.hero.line2")}>{T("home.hero.line2")}</span></h1>
       <p class="hero__lede" {A("home.hero.lede")}>{T("home.hero.lede")}</p>
       <div class="btn-row hero__cta">
-        <a class="btn btn--lg" href="{u('shop.html')}">{icon("cart")} <span {A("common.shop")}>{T("common.shop")}</span></a>
-        <a class="btn btn--outline btn--lg" href="{u('impact.html')}">{icon("sunrise")} <span {A("common.impact")}>{T("common.impact")}</span></a>
+        <a class="btn btn--lg" href="{u(route("shop"))}">{icon("cart")} <span {A("common.shop")}>{T("common.shop")}</span></a>
+        <a class="btn btn--outline btn--lg" href="{u(route("impact"))}">{icon("sunrise")} <span {A("common.impact")}>{T("common.impact")}</span></a>
       </div>
       <p class="hero__meta">
         <span>{icon("truck")} <span {A("home.hero.meta1")}>{T("home.hero.meta1")}</span></span>
@@ -110,7 +111,7 @@ def home(u):
   <div class="wrap">
     <div class="shop-toolbar">
       {section_head("home.featured.eyebrow", "home.featured.title", "home.featured.sub")}
-      <a class="btn btn--outline" href="{u('shop.html')}">{icon("cart")} <span {A("common.viewall")}>{T("common.viewall")}</span></a>
+      <a class="btn btn--outline" href="{u(route("shop"))}">{icon("cart")} <span {A("common.viewall")}>{T("common.viewall")}</span></a>
     </div>
     <div class="product-grid mt-3">{cards}</div>
   </div>
@@ -138,8 +139,8 @@ def home(u):
     {section_head("home.journey.eyebrow", "home.journey.title", None, center=True)}
     <div class="journey mt-4">{journey_steps}</div>
     <div class="btn-row btn-row--center mt-3">
-      <a class="btn btn--green" href="{u('how-it-works.html')}">{icon("scale")} See how each step is checked</a>
-      <a class="btn btn--outline" href="{u('products/' + 'mavina-midi-pickle' + '.html')}">{icon("leaf")} Trace one jar to its farmer</a>
+      <a class="btn btn--green" href="{u(route("how"))}">{icon("scale")} See how each step is checked</a>
+      <a class="btn btn--outline" href="{u(product_route("mavina-midi-pickle"))}">{icon("leaf")} Trace one jar to its farmer</a>
     </div>
   </div>
 </section>'''
@@ -170,7 +171,7 @@ def home(u):
               {"@context": "https://schema.org", "@type": "WebSite", "name": BRAND["name"], "url": BRAND["url"]}]
     return head(f"{BRAND['name']} — Women-led farm-direct spices, masalas & pickles from Karnataka",
                 "ApnaPan buys spices and produce direct from 480 Karnataka farmers, processes them in a unit run by 128 women, and funds employees' children's education. Shop masalas, ready mixes and pickles.",
-                "index.html", u("assets/css/styles.css"), u, jsonld) + header("nav.home", u) + body + footer(u) + "</body></html>"
+                "", u("assets/css/styles.css"), u, jsonld) + header("nav.home", u) + body + footer(u) + "</body></html>"
 
 
 # =============================================================== STORY
@@ -246,8 +247,8 @@ def story(u):
       <p class="signature mt-3">Lakshmi Devi R.</p>
       <p class="small muted">Founder, ApnaPan Foods · Doddaballapur, Karnataka</p>
       <div class="btn-row mt-3">
-        <a class="btn" href="{u('impact.html')}">{icon("sunrise")} See what it added up to</a>
-        <a class="btn btn--outline" href="{u('blog.html')}">{icon("book")} Read the kitchen notes</a>
+        <a class="btn" href="{u(route("impact"))}">{icon("sunrise")} See what it added up to</a>
+        <a class="btn btn--outline" href="{u(route("blog"))}">{icon("book")} Read the kitchen notes</a>
       </div>
     </div>
   </div>
@@ -293,7 +294,7 @@ def story(u):
     body = hero + problem + solution + founder + timeline + model + impact_band(u) + newsletter_block(u)
     body = f'<main id="main">{body}</main>'
     return head(f"Our Story — {BRAND['name']}", "How ApnaPan started with six women in a rented kitchen in Doddaballapur and grew into a women-run food processing company sourcing from 480 Karnataka farmers.",
-                "story.html", u("assets/css/styles.css"), u, [ld_org(), ld_breadcrumb([("Home", "index.html"), ("Our Story", "story.html")])]) + header("nav.story", u) + body + footer(u) + "</body></html>"
+                "our-story/", u("assets/css/styles.css"), u, [ld_org(), ld_breadcrumb([("Home", ""), ("Our Story", route("story"))])]) + header("nav.story", u) + body + footer(u) + "</body></html>"
 
 
 # =============================================================== IMPACT
@@ -377,7 +378,7 @@ def impact(u):
             "Average payment time: 4.2 working days",
         ])}
         <div class="btn-row mt-3">
-          <a class="btn btn--green" href="{u('farmers.html')}">{icon("seed")} Partner with us as a farmer</a>
+          <a class="btn btn--green" href="{u(route("farmers"))}">{icon("seed")} Partner with us as a farmer</a>
         </div>
       </div>
       <div class="float-card">
@@ -389,7 +390,7 @@ def impact(u):
         <p class="small muted mt-2">Plus partner growers in Koppal, Chitradurga, Chikkaballapur and Hassan.</p>
         <div class="placeholder-img mt-2" style="min-height:170px">
           <span style="text-align:center;max-width:80%">Regional map of Karnataka showing the six sourcing districts —
-          <a href="{u('farmers.html')}">see the full sourcing list on our farmers page</a>.</span>
+          <a href="{u(route("farmers"))}">see the full sourcing list on our farmers page</a>.</span>
         </div>
       </div>
     </div>
@@ -438,7 +439,7 @@ def impact(u):
       <h2 class="mt-2">Where the money goes</h2>
       <p class="lede mt-2">Of every ₹100 you spend with us, ₹73 stays inside the village-to-jar chain: the farmer, the women who process it, and the school fund. Here is the full split for 2025.</p>
       <div class="btn-row mt-3">
-        <a class="btn btn--outline" href="{u('blog.html')}">{icon("book")} Why we pay above the mandi</a>
+        <a class="btn btn--outline" href="{u(route("blog"))}">{icon("book")} Why we pay above the mandi</a>
       </div>
     </div>
     <div class="alloc">{alloc_rows}
@@ -472,7 +473,7 @@ def impact(u):
     body = hero + women + farmers + education + money_block + gallery + newsletter_block(u)
     body = f'<main id="main">{body}</main>'
     return head(f"Our Impact — {BRAND['name']}", "Women's employment, farmer partnerships and the Class 10 education fund: the numbers, the programme and the stories behind ApnaPan's social impact in Karnataka.",
-                "impact.html", u("assets/css/styles.css"), u, [ld_org(), ld_breadcrumb([("Home", "index.html"), ("Our Impact", "impact.html")])]) + header("nav.impact", u) + body + footer(u) + "</body></html>"
+                "our-impact/", u("assets/css/styles.css"), u, [ld_org(), ld_breadcrumb([("Home", ""), ("Our Impact", route("impact"))])]) + header("nav.impact", u) + body + footer(u) + "</body></html>"
 
 
 # =============================================================== SHOP
@@ -569,10 +570,10 @@ def shop(u):
   <div class="wrap grid grid--3">
     <div class="info-tile">{icon("gift")}<h4>Corporate gifting</h4>
     <p>Festival and onboarding hampers from 50 boxes, with your logo on a co-branded label and a card telling the story of the farmer behind each jar.</p>
-    <a class="btn btn--outline btn--sm mt-2" href="{u('contact.html')}">Enquire</a></div>
+    <a class="btn btn--outline btn--sm mt-2" href="{u(route("contact"))}">Enquire</a></div>
     <div class="info-tile">{icon("box")}<h4>Wholesale & retail</h4>
     <p>Offered from 24 units per SKU across Karnataka and Maharashtra, with a 14-day credit cycle and merchandising support.</p>
-    <a class="btn btn--outline btn--sm mt-2" href="{u('contact.html')}">Become a partner</a></div>
+    <a class="btn btn--outline btn--sm mt-2" href="{u(route("contact"))}">Become a partner</a></div>
     <div class="info-tile">{icon("truck")}<h4>Shipping & returns</h4>
     <p>Free shipping above ₹599, dispatched within 24 hours from Bengaluru, and a no-argument replacement if anything arrives damaged.</p>
     <a class="btn btn--outline btn--sm mt-2" href="#shop-faq">Read the FAQs</a></div>
@@ -587,13 +588,13 @@ def shop(u):
 {newsletter_block(u)}'''
 
     body = f'<main id="main">{body}</main>'
-    jsonld = [ld_org(), ld_breadcrumb([("Home", "index.html"), ("Shop", "shop.html")]),
+    jsonld = [ld_org(), ld_breadcrumb([("Home", ""), ("Shop", route("shop"))]),
               {"@context": "https://schema.org", "@type": "ItemList", "name": "ApnaPan products",
                "itemListElement": [{"@type": "ListItem", "position": i + 1, "name": p["name"],
-                                    "url": f'{BRAND["url"]}/products/{p["slug"]}.html'} for i, p in enumerate(PRODUCTS)]}]
+                                    "url": f'{BRAND["url"]}/{product_route(p["slug"])}'} for i, p in enumerate(PRODUCTS)]}]
     return head(f"Shop — women-led spices, masalas & pickles made in Karnataka | {BRAND['name']}",
                 "Buy farm-direct Karnataka masalas, ready mixes and pickles made by a women-run factory. Filter by category, size and price. Free shipping above ₹599.",
-                "shop.html", u("assets/css/styles.css"), u, jsonld) + header("nav.shop", u) + body + footer(u) + "</body></html>"
+                "shop/", u("assets/css/styles.css"), u, jsonld) + header("nav.shop", u) + body + footer(u) + "</body></html>"
 
 
 # =============================================================== PRODUCT
@@ -626,7 +627,7 @@ def product(u, p):
 
     sizes_g = " / ".join(s["label"] for s in p["sizes"])
     body = f'''
-{breadcrumbs([("Home", "index.html"), ("Shop", "shop.html"), (p["name"], None)], u)}
+{breadcrumbs([("Home", ""), ("Shop", route("shop")), (p["name"], None)], u)}
 <section class="section" style="padding-top:0">
   <div class="wrap pdp">
     <div class="pdp__gallery">
@@ -766,7 +767,7 @@ def product(u, p):
     </div>
     <div class="callout mt-3" style="max-width:75ch">
       <h4>{icon("rupee")} What we paid for this crop</h4>
-      <p>Our agreement price for this produce averaged 22% above the local mandi rate for the same grade, and payment was transferred within 7 working days of weighing at the farm gate. Full cost sheet: <a href="{u('blog.html')}">read the sourcing note</a>.</p>
+      <p>Our agreement price for this produce averaged 22% above the local mandi rate for the same grade, and payment was transferred within 7 working days of weighing at the farm gate. Full cost sheet: <a href="{u(route("blog"))}">read the sourcing note</a>.</p>
     </div>
   </div>
 
@@ -823,10 +824,10 @@ def product(u, p):
 </div>'''
 
     body = f'<main id="main">{body}</main>'
-    jsonld = [ld_product(p), ld_breadcrumb([("Home", "index.html"), ("Shop", "shop.html"), (p["name"], f'products/{p["slug"]}.html')])]
+    jsonld = [ld_product(p), ld_breadcrumb([("Home", ""), ("Shop", route("shop")), (p["name"], product_route(p["slug"]))])]
     return head(f'{p["name"]} — {p["type"]}, {p["unit"]} | {BRAND["name"]}',
                 f'{p["short"]} Made by {p["made_by"]["name"]} with produce from {p["sourced"]["farmer"]}, {p["sourced"]["village"]}. ₹{p["price"]} for {p["unit"]}.',
-                f'products/{p["slug"]}.html', u("assets/css/styles.css"), u, jsonld) + header("nav.shop", u) + body + footer(u) + "</body></html>"
+                product_route(p["slug"]), u("assets/css/styles.css"), u, jsonld) + header("nav.shop", u) + body + footer(u) + "</body></html>"
 
 
 # =============================================================== HOW IT WORKS
@@ -891,8 +892,8 @@ def how_it_works(u):
       <h2 class="mt-2">Type the batch code. See the whole story.</h2>
       <p class="lede mt-2" style="color:rgba(253,248,240,.85)">Every pack carries a code in the format <b>AP-2609-BIS-114</b>. Customers can enter it on our site to see the farmer, the village, the sourcing rate and the lab report for that exact lot. This is the piece of infrastructure we are proudest of, because it forces us to be accurate about everything else.</p>
       <div class="btn-row mt-3">
-        <a class="btn btn--gold" href="{u('shop.html')}">{icon("cart")} Buy a pack and try it</a>
-        <a class="btn btn--light" href="{u('blog.html')}">{icon("book")} Read a sourcing note</a>
+        <a class="btn btn--gold" href="{u(route("shop"))}">{icon("cart")} Buy a pack and try it</a>
+        <a class="btn btn--light" href="{u(route("blog"))}">{icon("book")} Read a sourcing note</a>
       </div>
     </div>
     <div class="float-card" style="background:rgba(253,248,240,.06);border-color:rgba(253,248,240,.2);color:var(--cream)">
@@ -924,7 +925,7 @@ def how_it_works(u):
     body = f'<main id="main">{body}</main>'
     return head(f"How It Works — sourcing, processing, QC, packing, delivery | {BRAND['name']}",
                 "Follow an ApnaPan jar through five steps: farm-gate sourcing, small-batch roasting, lab testing, packing with a traceable batch code, and 24-hour dispatch.",
-                "how-it-works.html", u("assets/css/styles.css"), u, [ld_org(), ld_breadcrumb([("Home", "index.html"), ("How It Works", "how-it-works.html")])]) + header("nav.how", u) + body + footer(u) + "</body></html>"
+                "how-it-works/", u("assets/css/styles.css"), u, [ld_org(), ld_breadcrumb([("Home", ""), ("How It Works", route("how"))])]) + header("nav.how", u) + body + footer(u) + "</body></html>"
 
 
 # =============================================================== CAREERS
@@ -1082,7 +1083,7 @@ def careers(u):
                                    for j in JOBS]}
     return head(f"Careers — work at a women-led food company in Karnataka | {BRAND['name']}",
                 "Six open roles in spice processing, quality control, packaging, field sourcing, accounts and marketing. Fair wages, skill training and funded education for your children.",
-                "careers.html", u("assets/css/styles.css"), u, [ld_org(), jobs_ld, ld_breadcrumb([("Home", "index.html"), ("Careers", "careers.html")])]) + header("nav.careers", u) + body + footer(u) + "</body></html>"
+                "careers/", u("assets/css/styles.css"), u, [ld_org(), jobs_ld, ld_breadcrumb([("Home", ""), ("Careers", route("careers"))])]) + header("nav.careers", u) + body + footer(u) + "</body></html>"
 
 
 # =============================================================== FARMERS
@@ -1246,7 +1247,7 @@ def farmers(u):
     body = f'<main id="main">{body}</main>'
     return head(f"For Farmers — sell directly to ApnaPan, paid in 7 days",
                 "A price agreed before you sow, weighing in front of you, payment within 7 working days and free soil testing. Partner with ApnaPan as a spice or produce supplier in Karnataka.",
-                "farmers.html", u("assets/css/styles.css"), u, [ld_org(), ld_faq(FARMER_FAQ), ld_breadcrumb([("Home", "index.html"), ("For Farmers", "farmers.html")])]) + header("nav.farmers", u) + body + footer(u) + "</body></html>"
+                "for-farmers/", u("assets/css/styles.css"), u, [ld_org(), ld_faq(FARMER_FAQ), ld_breadcrumb([("Home", ""), ("For Farmers", route("farmers"))])]) + header("nav.farmers", u) + body + footer(u) + "</body></html>"
 
 
 # =============================================================== BLOG
@@ -1255,18 +1256,18 @@ def blog(u):
     for i, p in enumerate(POSTS):
         big = ' style="grid-column:span 2"' if i == 0 else ""
         cards += f'''<article class="card card--hover"{big}>
-        <a class="card__media" href="{u('blog/' + p["slug"] + '.html')}" style="display:block">
+        <a class="card__media" href="{u(post_route(p["slug"]))}" style="display:block">
           <img src="{u(p["img"])}" alt="{E(p["title"])}" loading="lazy" style="aspect-ratio:16/9;width:100%;object-fit:cover">
         </a>
         <div class="card__body">
           <div class="tag-row"><span class="tag tag--green">{E(p["category"])}</span>
             <span class="tag tag--outline">{E(p["date_display"])}</span>
             <span class="tag tag--outline">{E(p["read"])}</span></div>
-          <h3 style="font-size:1.28rem"><a href="{u('blog/' + p["slug"] + '.html')}">{E(p["title"])}</a></h3>
+          <h3 style="font-size:1.28rem"><a href="{u(post_route(p["slug"]))}">{E(p["title"])}</a></h3>
           <p class="small muted">{E(p["excerpt"])}</p>
           <div class="card__foot">
             <span class="small muted">{E(p["author"])}</span>
-            <a class="btn btn--outline btn--sm" href="{u('blog/' + p["slug"] + '.html')}">{T("common.readmore")} {icon("arrow-r")}</a>
+            <a class="btn btn--outline btn--sm" href="{u(post_route(p["slug"]))}">{T("common.readmore")} {icon("arrow-r")}</a>
           </div>
         </div>
       </article>'''
@@ -1308,10 +1309,10 @@ def blog(u):
     body = f'<main id="main">{body}</main>'
     ld = {"@context": "https://schema.org", "@type": "Blog", "name": "ApnaPan Kitchen Notes",
           "blogPost": [{"@type": "BlogPosting", "headline": p["title"], "datePublished": p["date"],
-                        "url": f'{BRAND["url"]}/blog/{p["slug"]}.html', "author": {"@type": "Person", "name": p["author"]}} for p in POSTS]}
+                        "url": f'{BRAND["url"]}/{post_route(p["slug"])}', "author": {"@type": "Person", "name": p["author"]}} for p in POSTS]}
     return head(f"Blog — sourcing notes, ingredient guides & impact updates | {BRAND['name']}",
                 "Notes from ApnaPan's unit and partner farms: why we pay above the mandi, how Byadagi chilli behaves in a pan, and inside our Class 10 education fund.",
-                "blog.html", u("assets/css/styles.css"), u, [ld_org(), ld, ld_breadcrumb([("Home", "index.html"), ("Blog", "blog.html")])]) + header("nav.blog", u) + body + footer(u) + "</body></html>"
+                "blog/", u("assets/css/styles.css"), u, [ld_org(), ld, ld_breadcrumb([("Home", ""), ("Blog", route("blog"))])]) + header("nav.blog", u) + body + footer(u) + "</body></html>"
 
 
 def post_page(u, p):
@@ -1331,20 +1332,20 @@ def post_page(u, p):
     toc_html = "".join(f'<li><a href="#{a}">{E(t)}</a></li>' for t, a in toc)
     others = [q for q in POSTS if q["slug"] != p["slug"]][:3]
     rel = "".join(f'''<article class="card card--hover">
-        <a class="card__media" href="{u('blog/' + q["slug"] + '.html')}" style="display:block">
+        <a class="card__media" href="{u(post_route(q["slug"]))}" style="display:block">
           <img src="{u(q["img"])}" alt="{E(q["title"])}" loading="lazy" style="aspect-ratio:16/9;object-fit:cover"></a>
         <div class="card__body"><span class="tag tag--green" style="align-self:flex-start">{E(q["category"])}</span>
-          <h4><a href="{u('blog/' + q["slug"] + '.html')}">{E(q["title"])}</a></h4>
+          <h4><a href="{u(post_route(q["slug"]))}">{E(q["title"])}</a></h4>
           <p class="small muted">{E(q["excerpt"])}</p></div></article>''' for q in others)
 
     ld = {"@context": "https://schema.org", "@type": "BlogPosting", "headline": p["title"],
           "description": p["excerpt"], "datePublished": p["date"], "dateModified": p["date"],
           "image": f'{BRAND["url"]}/{p["img"]}', "author": {"@type": "Person", "name": p["author"]},
           "publisher": {"@type": "Organization", "name": BRAND["name"]},
-          "mainEntityOfPage": f'{BRAND["url"]}/blog/{p["slug"]}.html', "articleSection": p["category"]}
+          "mainEntityOfPage": f'{BRAND["url"]}/{post_route(p["slug"])}', "articleSection": p["category"]}
 
     body = f'''
-{breadcrumbs([("Home", "index.html"), ("Blog", "blog.html"), (p["title"][:44] + "…", None)], u)}
+{breadcrumbs([("Home", ""), ("Blog", route("blog")), (p["title"][:44] + "…", None)], u)}
 <section class="section" style="padding-top:0">
   <div class="wrap">
     <div class="article-meta">
@@ -1366,22 +1367,22 @@ def post_page(u, p):
       <div class="share-row mt-3">
         <span>{T("common.share")}:</span>
         <a href="https://wa.me/?text={p["title"].replace(" ", "%20")}" target="_blank" rel="noopener" aria-label="Share on WhatsApp">{icon("whatsapp")}</a>
-        <a href="https://www.facebook.com/sharer/sharer.php?u={BRAND["url"]}/blog/{p["slug"]}.html" target="_blank" rel="noopener" aria-label="Share on Facebook">{icon("facebook")}</a>
-        <a href="https://www.linkedin.com/sharing/share-offsite/?url={BRAND["url"]}/blog/{p["slug"]}.html" target="_blank" rel="noopener" aria-label="Share on LinkedIn">{icon("linkedin")}</a>
+        <a href="https://www.facebook.com/sharer/sharer.php?u={BRAND["url"]}/{post_route(p["slug"])}" target="_blank" rel="noopener" aria-label="Share on Facebook">{icon("facebook")}</a>
+        <a href="https://www.linkedin.com/sharing/share-offsite/?url={BRAND["url"]}/{post_route(p["slug"])}" target="_blank" rel="noopener" aria-label="Share on LinkedIn">{icon("linkedin")}</a>
         <button type="button" data-copy-link aria-label="Copy link">{icon("info")}</button>
       </div>
       <div class="callout mt-3">
         <h4>{icon("cart")} Try it yourself</h4>
         <p>Every claim in this post is in a jar on our shop. Free shipping above ₹599.</p>
-        <a class="btn btn--sm mt-2" href="{u('shop.html')}">{T("common.shop")}</a>
+        <a class="btn btn--sm mt-2" href="{u(route("shop"))}">{T("common.shop")}</a>
       </div>
     </aside>
     <div class="prose">{body_html}
       <hr>
       <p class="small muted">Written by {E(p["author"])} for ApnaPan. Figures quoted are from our own records and are illustrative on this demonstration site.</p>
       <div class="btn-row mt-2">
-        <a class="btn btn--outline" href="{u('blog.html')}">{icon("arrow-r")} All posts</a>
-        <a class="btn" href="{u('shop.html')}">{icon("cart")} {T("common.shop")}</a>
+        <a class="btn btn--outline" href="{u(route("blog"))}">{icon("arrow-r")} All posts</a>
+        <a class="btn" href="{u(route("shop"))}">{icon("cart")} {T("common.shop")}</a>
       </div>
     </div>
   </div>
@@ -1395,8 +1396,8 @@ def post_page(u, p):
 </section>
 {newsletter_block(u)}'''
     body = f'<main id="main">{body}</main>'
-    return head(f'{p["title"]} | {BRAND["name"]}', p["excerpt"], f'blog/{p["slug"]}.html',
-                u("assets/css/styles.css"), u, [ld, ld_breadcrumb([("Home", "index.html"), ("Blog", "blog.html"), (p["title"], f'blog/{p["slug"]}.html')])]) + header("nav.blog", u) + body + footer(u) + "</body></html>"
+    return head(f'{p["title"]} | {BRAND["name"]}', p["excerpt"], post_route(p["slug"]),
+                u("assets/css/styles.css"), u, [ld, ld_breadcrumb([("Home", ""), ("Blog", route("blog")), (p["title"], post_route(p["slug"]))])]) + header("nav.blog", u) + body + footer(u) + "</body></html>"
 
 
 # =============================================================== CONTACT
@@ -1510,7 +1511,7 @@ def contact(u):
                            "addressRegion": "Karnataka", "addressCountry": "IN"} for a in BRAND["addresses"]]}
     return head(f"Contact {BRAND['name']} — factory visits, wholesale, CSR & orders",
                 "Call, WhatsApp or write to ApnaPan. Factory visits on Tuesdays and Thursdays, wholesale and CSR partnerships, order support and press enquiries.",
-                "contact.html", u("assets/css/styles.css"), u, [places, ld_faq(FAQS_SHIPPING), ld_breadcrumb([("Home", "index.html"), ("Contact", "contact.html")])]) + header("nav.contact", u) + body + footer(u) + "</body></html>"
+                "contact/", u("assets/css/styles.css"), u, [places, ld_faq(FAQS_SHIPPING), ld_breadcrumb([("Home", ""), ("Contact", route("contact"))])]) + header("nav.contact", u) + body + footer(u) + "</body></html>"
 
 
 # =============================================================== CHECKOUT
@@ -1611,8 +1612,8 @@ def checkout(u):
       <p class="lede mt-2">{T("co.thankssub")}</p>
       <p class="mt-2"><b>{T("co.orderid")}:</b> <span data-order-id>—</span></p>
       <div class="btn-row btn-row--center mt-3">
-        <a class="btn" href="{u('shop.html')}">{icon("cart")} {T("common.continue")}</a>
-        <a class="btn btn--outline" href="{u('index.html')}">{icon("arrow-r")} Home</a>
+        <a class="btn" href="{u(route("shop"))}">{icon("cart")} {T("common.continue")}</a>
+        <a class="btn btn--outline" href="{u(route("home"))}">{icon("arrow-r")} Home</a>
       </div>
     </div>
   </div>
@@ -1625,7 +1626,7 @@ def checkout(u):
 </section>'''
     body = f'<main id="main">{body}</main>'
     return head(f"Checkout — {BRAND['name']}", "Complete your ApnaPan order. UPI, cards, netbanking or cash on delivery. Free shipping above ₹599.",
-                "checkout.html", u("assets/css/styles.css"), u, [ld_org()]) + header("nav.shop", u) + body + footer(u) + "</body></html>"
+                "checkout/", u("assets/css/styles.css"), u, [ld_org()]) + header("nav.shop", u) + body + footer(u) + "</body></html>"
 
 
 # =============================================================== 404
@@ -1638,8 +1639,8 @@ def not_found(u):
     <h1 class="mt-3">That jar is not on this shelf.</h1>
     <p class="lede mt-2">The page you were looking for does not exist — but the pickle does.</p>
     <div class="btn-row btn-row--center mt-3">
-      <a class="btn" href="{u('shop.html')}">{icon("cart")} {T("common.shop")}</a>
-      <a class="btn btn--outline" href="{u('index.html')}">{icon("arrow-r")} Home</a>
+      <a class="btn" href="{u(route("shop"))}">{icon("cart")} {T("common.shop")}</a>
+      <a class="btn btn--outline" href="{u(route("home"))}">{icon("arrow-r")} Home</a>
     </div>
   </div>
 </section>

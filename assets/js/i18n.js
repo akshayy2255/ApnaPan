@@ -59,7 +59,7 @@
     try { localStorage.setItem(KEY, code); } catch (e) {}
 
     document.documentElement.setAttribute('lang', langMeta(code).lang);
-    document.documentElement.setAttribute('data-lang', code);
+    document.documentElement.setAttribute('data-lang-active', code);
 
     [].forEach.call(document.querySelectorAll('[data-i18n]'), function (el) {
       var k = el.getAttribute('data-i18n');
@@ -89,18 +89,24 @@
     var badge = document.querySelector('[data-lang-current]');
     if (badge) badge.textContent = code.toUpperCase();
 
-    [].forEach.call(document.querySelectorAll('[data-lang]'), function (b) {
+    [].forEach.call(document.querySelectorAll(LANG_SELECTOR), function (b) {
       b.setAttribute('aria-pressed', b.getAttribute('data-lang') === code ? 'true' : 'false');
     });
 
     document.dispatchEvent(new CustomEvent('apnapan:lang', { detail: { lang: code } }));
   }
 
+  // Only genuine language buttons may be intercepted — never a link or anything
+  // that merely sits inside an element carrying a language attribute.
+  var LANG_SELECTOR = 'button[data-lang], [role="menuitemradio"][data-lang]';
+
   document.addEventListener('click', function (e) {
-    var b = e.target.closest('[data-lang]');
+    var b = e.target.closest(LANG_SELECTOR);
     if (!b) return;
+    var code = b.getAttribute('data-lang');
+    if (!DICT[code]) return;         // unknown code -> let the click through untouched
     e.preventDefault();
-    apply(b.getAttribute('data-lang'));
+    apply(code);
   });
 
   // First visit: respect the browser language if it is one we support.
@@ -114,4 +120,5 @@
   if (document.readyState !== 'loading') apply(current);
 
   window.APNAPAN_setLang = apply;
+  window.APNAPAN_lang = function () { return current; };
 })();
