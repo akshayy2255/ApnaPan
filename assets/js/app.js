@@ -5,10 +5,36 @@
 (function () {
   'use strict';
 
+  /* localStorage is not always available — sandboxed preview iframes, Safari private
+     mode and storage-blocked browsers throw even when READING it, which would abort
+     this whole file before any handler is bound. Everything goes through this shim. */
+  var store = (function () {
+    var mem = {}, live = false;
+    try {
+      window.localStorage.setItem('__apnapan_t', '1');
+      window.localStorage.removeItem('__apnapan_t');
+      live = true;
+    } catch (e) { live = false; }
+    return {
+      get: function (k) {
+        if (live) { try { return window.localStorage.getItem(k); } catch (e) { live = false; } }
+        return (k in mem) ? mem[k] : null;
+      },
+      set: function (k, v) {
+        mem[k] = String(v);
+        if (live) { try { window.localStorage.setItem(k, v); } catch (e) { live = false; } }
+      },
+      del: function (k) {
+        delete mem[k];
+        if (live) { try { window.localStorage.removeItem(k); } catch (e) { live = false; } }
+      }
+    };
+  })();
+
   var CFG = window.APNAPAN || {};
   var PRODUCTS = CFG.products || [];
   var BASE = CFG.base || '';
-  var LANG = localStorage.getItem('apnapan_lang') || 'en';
+  var LANG = store.get('apnapan_lang') || 'en';
   var CART_KEY = 'apnapan_cart_v1';
   var WISH_KEY = 'apnapan_wish_v1';
   var FREE_SHIP = CFG.freeShipOver || 599;
@@ -54,10 +80,10 @@
 
   /* ---------------------------------------------------------------- cart */
   var cart = { items: [] };
-  try { cart = JSON.parse(localStorage.getItem(CART_KEY)) || { items: [] }; } catch (e) { cart = { items: [] }; }
+  try { cart = JSON.parse(store.get(CART_KEY)) || { items: [] }; } catch (e) { cart = { items: [] }; }
   if (!cart.items) cart.items = [];
 
-  function saveCart() { try { localStorage.setItem(CART_KEY, JSON.stringify(cart)); } catch (e) {} }
+  function saveCart() { try { store.set(CART_KEY, JSON.stringify(cart)); } catch (e) {} }
 
   function lineData(l) {
     var p = product(l.slug);
@@ -191,10 +217,10 @@
     }
     if ((el = e.target.closest('[data-cart-clear]'))) { cart.items = []; saveCart(); renderCart(); return; }
     if ((el = e.target.closest('[data-wish]'))) {
-      var wish = {}; try { wish = JSON.parse(localStorage.getItem(WISH_KEY)) || {}; } catch (err) {}
+      var wish = {}; try { wish = JSON.parse(store.get(WISH_KEY)) || {}; } catch (err) {}
       var k = el.getAttribute('data-wish');
       wish[k] = !wish[k];
-      try { localStorage.setItem(WISH_KEY, JSON.stringify(wish)); } catch (err) {}
+      try { store.set(WISH_KEY, JSON.stringify(wish)); } catch (err) {}
       el.setAttribute('aria-pressed', wish[k] ? 'true' : 'false');
       return;
     }
@@ -617,7 +643,7 @@
     toTop.addEventListener('click', function () { window.scrollTo({ top: 0, behavior: 'smooth' }); });
   }
   // wishlist state
-  var wish = {}; try { wish = JSON.parse(localStorage.getItem(WISH_KEY)) || {}; } catch (e) {}
+  var wish = {}; try { wish = JSON.parse(store.get(WISH_KEY)) || {}; } catch (e) {}
   Object.keys(wish).forEach(function (k) {
     if (!wish[k]) return;
     var b = document.querySelector('[data-wish="' + k + '"]');

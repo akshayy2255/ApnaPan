@@ -5,10 +5,36 @@
 (function () {
   'use strict';
 
+  /* localStorage is not always available — sandboxed preview iframes, Safari private
+     mode and storage-blocked browsers throw even when READING it, which would abort
+     this whole file before any handler is bound. Everything goes through this shim. */
+  var store = (function () {
+    var mem = {}, live = false;
+    try {
+      window.localStorage.setItem('__apnapan_t', '1');
+      window.localStorage.removeItem('__apnapan_t');
+      live = true;
+    } catch (e) { live = false; }
+    return {
+      get: function (k) {
+        if (live) { try { return window.localStorage.getItem(k); } catch (e) { live = false; } }
+        return (k in mem) ? mem[k] : null;
+      },
+      set: function (k, v) {
+        mem[k] = String(v);
+        if (live) { try { window.localStorage.setItem(k, v); } catch (e) { live = false; } }
+      },
+      del: function (k) {
+        delete mem[k];
+        if (live) { try { window.localStorage.removeItem(k); } catch (e) { live = false; } }
+      }
+    };
+  })();
+
   var DICT = window.APNAPAN_I18N || { en: {} };
   var LANGS = window.APNAPAN_LANGS || [{ code: 'en', label: 'English', native: 'English', lang: 'en-IN' }];
   var KEY = 'apnapan_lang';
-  var current = localStorage.getItem(KEY) || 'en';
+  var current = store.get(KEY) || 'en';
   if (!DICT[current]) current = 'en';
 
   function langMeta(code) {
@@ -56,7 +82,7 @@
   function apply(code) {
     var dict = DICT[code] || DICT.en;
     current = code;
-    try { localStorage.setItem(KEY, code); } catch (e) {}
+    try { store.set(KEY, code); } catch (e) {}
 
     document.documentElement.setAttribute('lang', langMeta(code).lang);
     document.documentElement.setAttribute('data-lang-active', code);
@@ -110,7 +136,7 @@
   });
 
   // First visit: respect the browser language if it is one we support.
-  if (!localStorage.getItem(KEY)) {
+  if (!store.get(KEY)) {
     var nav = (navigator.language || 'en').toLowerCase();
     if (nav.indexOf('kn') === 0) current = 'kn';
     else if (nav.indexOf('hi') === 0) current = 'hi';

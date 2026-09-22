@@ -52,7 +52,7 @@ Stop it with **Ctrl + C**.
 
 ### Don't run it from `file://`
 
-Opening `index.html` by double-clicking mostly works, but browsers restrict `localStorage` on `file://` URLs, which the cart, wishlist and language choice all rely on. Use one of the servers above — it's why they exist.
+Opening `index.html` by double-clicking mostly works, but browsers restrict `localStorage` on `file://` URLs, which the cart, wishlist and language choice rely on to *remember* themselves. Every storage call goes through a shim in `assets/js/app.js` / `assets/js/i18n.js`, so when storage is blocked or unavailable — `file://`, Safari private mode, a sandboxed preview iframe — the site still works, it just forgets between page loads. Use one of the servers above and nothing is forgotten.
 
 ### Editing content
 
