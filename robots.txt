@@ -1,0 +1,5 @@
+# ApnaPan
+User-agent: *
+Allow: /
+Disallow: /checkout.html
+Sitemap: https://www.apnapan.in/sitemap.xml

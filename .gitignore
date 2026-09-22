@@ -1,0 +1,28 @@
+# ---------------------------------------------------------------------------
+# ApnaPan — things git should ignore
+# ---------------------------------------------------------------------------
+
+# Python (used only by the _build/ generator)
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Editors & OS
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+*.swp
+*~
+
+# Local dev servers / logs
+*.log
+.cache/
+.tmp/
+
+# Keep the build tooling — run `python3 _build/build.py` to regenerate pages.
