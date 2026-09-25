@@ -85,6 +85,7 @@ def sitemap():
         urls.append((product_route(p["slug"]), "0.9"))
     for p in POSTS:
         urls.append((post_route(p["slug"]), "0.7"))
+    urls.append(("dashboard/", "0.5"))          # partner dashboard (hand-written page, see dashboard/index.html)
     items = "\n".join(
         f'  <url><loc>{BRAND["url"]}/{u}</loc><lastmod>{TODAY}</lastmod><changefreq>weekly</changefreq><priority>{pr}</priority></url>'
         for u, pr in urls)
@@ -94,6 +95,7 @@ def sitemap():
 User-agent: *
 Allow: /
 Disallow: /checkout/
+Disallow: /dashboard/
 Sitemap: {BRAND['url']}/sitemap.xml
 """)
 

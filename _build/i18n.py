@@ -21,6 +21,7 @@ STR = {
     "nav.how":             ("How It Works", "ಇದು ಹೇಗೆ ನಡೆಯುತ್ತದೆ", "यह कैसे होता है"),
     "nav.farmers":         ("For Farmers", "ರೈತರಿಗಾಗಿ", "किसानों के लिए"),
     "nav.careers":         ("Careers", "ಉದ್ಯೋಗ", "करियर"),
+    "nav.dashboard": ("Dashboard", "ಡ್ಯಾಶ್‌ಬೋರ್ಡ್", "डैशबोर्ड"),
     "nav.blog":            ("Blog", "ಬ್ಲಾಗ್", "ब्लॉग"),
     "nav.contact":         ("Contact", "ಸಂಪರ್ಕ", "संपर्क"),
     "nav.menu":            ("Menu", "ಮೆನು", "मेन्यू"),

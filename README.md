@@ -89,6 +89,7 @@ apnapan/
 │                              Byadagi chilli guide, pickle calendar, "what women-led means")
 ├── contact/                   Contact, CSR & partnership desk, factory visit booking, map placeholder
 ├── checkout/                  Cart → details → payment (Razorpay-ready, simulated fallback)
+├── dashboard/                 Sign-in + partner dashboard — one self-contained page (see §9)
 ├── 404.html · sitemap.xml · robots.txt · .nojekyll
 ├── *.html  (10 files)         Legacy redirect stubs — story.html, farmers.html, shop.html, … keep old
 │                              links alive by meta-refresh + canonical to the new clean URL
@@ -128,11 +129,12 @@ every nav/footer/sitemap reference follows.
 ```bash
 python3 -m pip install playwright && python3 -m playwright install chromium
 cd apnapan && python3 serve.py 8000 --no-open &     # any static server works
-python3 _build/test_header.py     # 73 checks — header, nav, dropdown, drawer, keyboard, a11y
+python3 _build/test_header.py     #  73 checks — header, nav, dropdown, drawer, keyboard, a11y
 python3 _build/test_site.py       # 168 checks — all 24 pages, links, cart, checkout, languages
+python3 _build/test_app.py        # 104 checks — auth, dashboard, trace, theme, mobile, data drift
 ```
 
-Both suites exit non-zero on any failure. Use them after touching routing, assets or the header.
+All three exit non-zero on any failure. Use them after touching routing, assets, the header or the dashboard.
 
 ### Rebuilding after an edit
 
@@ -183,6 +185,9 @@ This is a **demonstration site**. Every name, number and quote was written for t
 - [ ] **Order confirmation** — the success panel is client-side only; wire real order IDs from your gateway.
 - [ ] **GST invoicing** — no invoice is generated. Add this if you sell B2B.
 - [ ] **Shipping rates** — flat ₹49 / free above ₹599, ₹25 COD fee: `js_data()` in `build.py`.
+- [ ] **Dashboard auth is client-side only** — no server, no accounts, no password is ever checked. Point it at real auth (and never trust it client-side) before calling it a login.
+- [ ] **Trace Your Product uses sample batch codes** — connect `BATCHES` in `dashboard/index.html` to your batch database.
+- [ ] **Dashboard enquiry form submits nowhere** — same as the site forms, wire it up.
 - [ ] **Terms, privacy, returns** — currently these footer links point at `contact/`. Add real policy pages.
 
 **Forms** (contact, careers, farmers, newsletter, review) validate and confirm on screen but do not submit anywhere. Point them at Formspree / Google Forms / your CRM / a serverless function. Each form has a `data-form="…"` attribute and a `demo.*` notice you can delete.
@@ -219,7 +224,59 @@ This is a **demonstration site**. Every name, number and quote was written for t
 
 **Accessibility** — semantic landmarks and heading order, skip-to-content link, visible focus rings, `aria-current` on the active nav item, `aria-pressed` on all toggles, `aria-selected` tabs, dialog semantics on the cart drawer, ≥44 px touch targets, `prefers-reduced-motion` support, and alt text on every image. Forms use real labels, `aria-invalid` and inline error text.
 
-## 8. Deploying
+## 8. The partner dashboard
+
+`dashboard/index.html` is a **single self-contained page** — sign-in and dashboard in one
+file, with no external CSS, JS, fonts or images. It works offline, inside a sandboxed
+preview, from `file://`, and on GitHub Pages or any static host. Open it at
+`/dashboard/`, or from the **Dashboard** link in the site's utility bar.
+
+**Sign-in.** Tabs switch between *Sign in* and *Create account*. Validation is inline and
+accessible (`aria-invalid`, messages tied to the field, focus moved to the first error).
+Any well-formed email with a password of six or more characters signs you in — there is no
+server, nothing is sent anywhere, and no account is created. **Continue with demo account**
+skips the form and signs in as Lakshmi Devi, the founder, straight into the dashboard. The
+session lives in `localStorage` (`apnapan_session_v1`), so a refresh keeps you signed in and
+*Sign out* clears it.
+
+**Sections.** Impact Dashboard (default) · Product Catalogue · Know Your Farmer · Trace Your
+Product · Meet Our ApnaPan · Become an ApnaPan. Each is deep-linkable (`#/impact`, `#/trace`)
+and the sidebar marks the current one with `aria-current`. The Impact view has the four stat
+cards — Women Employed 128, Farmers Partnered 480+, Children Supported 216, Processing Units 1 —
+alternating terracotta and olive, plus the Year 1 / Year 3 / Long-term growth timeline from the
+pitch deck, where every ₹100 goes, and the Class 10 Fund.
+
+**Where the numbers come from.** Nothing in the dashboard is invented separately. The data
+block in the page is generated from `_build/content.py` — the same file the website is built
+from — so the two can never disagree:
+
+```bash
+python3 _build/app_data.py      # regenerate the dashboard's data block (idempotent)
+```
+
+`_build/test_app.py` asserts the embedded copy still equals `content.py`, so if you edit the
+content and forget to regenerate, the tests fail rather than the page going quietly stale.
+
+**Dark / light mode.** Toggles `data-theme` on `<html>`, persists in `apnapan_theme`, and
+follows the operating system on a first visit. It is applied before first paint, so dark-mode
+visitors never see a cream flash. Theme, session and the mobile drawer all work with storage
+blocked (private mode, sandboxed iframes) — see §5.
+
+**Sample data, and what to replace.** The four batch codes under *Trace Your Product*
+(`AP-2609-BB-0142` and three others) are a sample register. Real batch records need a backend:
+the trace view already renders a six-step journey from `BATCHES`, so point it at your batch
+database and the rest of the view works unchanged. Stock status on the catalogue cards is
+illustrative. The form under *Become an ApnaPan* validates but submits nowhere — wire it to
+your inbox or CRM before launch, exactly like the forms in §4.
+
+**Accessibility.** Semantic landmarks, a skip link, `<button>` for every control, `aria-expanded`
+on the menu and account menu, Escape closes menus and the mobile drawer, arrow keys move
+between the auth tabs, focus is visible and never lost, and the mobile drawer takes over below
+900px with a scrim, a body-scroll lock and a full-height panel.
+
+---
+
+## 9. Deploying
 
 Any static host — the build output is plain files:
 
