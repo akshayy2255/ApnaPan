@@ -78,6 +78,67 @@
     setTimeout(function () { el.remove(); }, 3000);
   }
 
+  /* --------------------------------------------------------------- theme
+     Light / dark. The attribute is the single source of truth: CSS does all
+     the visual work off html[data-theme], so this only flips the attribute and
+     keeps the button labels honest. The head of the page already set it before
+     first paint; here we wire the controls and follow the system while the
+     visitor has not chosen for themselves. */
+  var THEME_KEY = 'apnapan_theme';
+  var mq = (window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null);
+
+  function theme() {
+    return document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+  }
+  function themeIsChosen() {
+    var v = store.get(THEME_KEY);
+    return v === 'dark' || v === 'light';
+  }
+  function paintTheme() {
+    var dark = theme() === 'dark';
+    $$('[data-theme-toggle]').forEach(function (b) {
+      b.setAttribute('aria-pressed', dark ? 'true' : 'false');
+      if (b.getAttribute('role') === 'switch') b.setAttribute('aria-checked', dark ? 'true' : 'false');
+    });
+    var meta = document.getElementById('themeColor');
+    if (meta) meta.setAttribute('content', dark ? '#221809' : '#1e4436');
+    var root = document.documentElement;
+    if (root.getAttribute('data-theme') !== (dark ? 'dark' : 'light')) {
+      root.setAttribute('data-theme', dark ? 'dark' : 'light');
+    }
+  }
+  function setTheme(mode, remember) {
+    var root = document.documentElement;
+    /* one frame with transitions off: see the note in styles.css */
+    root.setAttribute('data-theme-switching', '');
+    root.setAttribute('data-theme', mode === 'dark' ? 'dark' : 'light');
+    if (remember) store.set(THEME_KEY, mode);
+    paintTheme();
+    var release = function () { root.removeAttribute('data-theme-switching'); };
+    if (window.requestAnimationFrame) {
+      requestAnimationFrame(function () { requestAnimationFrame(release); });
+    } else {
+      setTimeout(release, 32);
+    }
+  }
+
+  /* One delegated listener, matched on the button's own attribute — never on an
+     ancestor, which is what once broke every link on the site. */
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-theme-toggle]');
+    if (!b) return;
+    e.preventDefault();
+    setTheme(theme() === 'dark' ? 'light' : 'dark', true);
+  });
+
+  /* Follow the operating system until the visitor makes their own choice. */
+  if (mq && mq.addEventListener) {
+    mq.addEventListener('change', function (ev) {
+      if (!themeIsChosen()) setTheme(ev.matches ? 'dark' : 'light', false);
+    });
+  }
+  paintTheme();
+
   /* ---------------------------------------------------------------- cart */
   var cart = { items: [] };
   try { cart = JSON.parse(store.get(CART_KEY)) || { items: [] }; } catch (e) { cart = { items: [] }; }

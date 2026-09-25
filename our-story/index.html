@@ -1,12 +1,25 @@
 <!DOCTYPE html>
-<html lang="en-IN">
+<html lang="en-IN" data-theme="light">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<script>
+/* Theme before first paint — otherwise a dark-mode visitor gets a cream flash.
+   Runs before the stylesheets; app.js only reads the result afterwards. */
+(function () {
+  var t = null;
+  try { t = localStorage.getItem("apnapan_theme"); } catch (e) {}
+  if (t !== "dark" && t !== "light") {
+    t = (window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches) ? "dark" : "light";
+  }
+  document.documentElement.setAttribute("data-theme", t);
+})();
+</script>
 <title>Our Story — ApnaPan</title>
 <meta name="description" content="How ApnaPan started with six women in a rented kitchen in Doddaballapur and grew into a women-run food processing company sourcing from 480 Karnataka farmers.">
 <link rel="canonical" href="https://akshayy2255.github.io/ApnaPan/our-story/">
-<meta name="theme-color" content="#1e4436">
+<meta name="theme-color" id="themeColor" content="#1e4436">
+<meta name="color-scheme" content="light dark">
 <meta name="author" content="ApnaPan Foods Pvt. Ltd.">
 <meta name="keywords" content="women-led spices, farm to market pickles, ethical sourcing India, Karnataka masala, direct from farmers, ApnaPan, bisibelebath masala, mavina midi pickle">
 <meta property="og:type" content="website">
@@ -85,10 +98,32 @@
           <li><button type="button" data-lang="kn" aria-pressed="false"><span>Kannada</span><span class="native">ಕನ್ನಡ</span></button></li>
           <li><button type="button" data-lang="hi" aria-pressed="false"><span>Hindi</span><span class="native">हिन्दी</span></button></li></ul>
       </div>
+      <div class="nav__theme">
+        <div class="nav__theme-row">
+          <span class="nav__theme-title">
+            <svg data-theme-icon="sun" class="" style="width:16px;height:16px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.2 5.2l1.6 1.6M17.2 17.2l1.6 1.6M18.8 5.2l-1.6 1.6M6.8 17.2l-1.6 1.6"/></svg>
+            <svg data-theme-icon="moon" class="" style="width:16px;height:16px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 14.3A8.5 8.5 0 0 1 9.7 3.5a8.5 8.5 0 1 0 10.8 10.8z"/></svg>
+            <span data-i18n="nav.theme">Dark mode</span>
+          </span>
+          <button class="switch" type="button" data-theme-toggle role="switch" aria-checked="false"
+                  aria-label="Switch between light and dark mode" data-i18n-attr="aria-label:a11y.theme">
+            <span class="switch__knob">
+              <svg class="switch__sun" style="width:13px;height:13px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.2 5.2l1.6 1.6M17.2 17.2l1.6 1.6M18.8 5.2l-1.6 1.6M6.8 17.2l-1.6 1.6"/></svg>
+              <svg class="switch__moon" style="width:13px;height:13px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 14.3A8.5 8.5 0 0 1 9.7 3.5a8.5 8.5 0 1 0 10.8 10.8z"/></svg>
+            </span>
+          </button>
+        </div>
+      </div>
       <a class="btn nav__cta" href="../shop/"><svg class="" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9.5" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M2 3h2.3l2.5 11.1a2 2 0 0 0 2 1.6h8.6a2 2 0 0 0 1.9-1.4L21 7H5"/></svg> <span data-i18n="common.shop">Shop our products</span></a>
     </nav>
 
     <div class="header__tools">
+      <button class="icon-btn theme-btn" type="button" data-theme-toggle aria-pressed="false"
+              aria-label="Switch between light and dark mode" title="Switch between light and dark mode"
+              data-i18n-attr="aria-label:a11y.theme;title:a11y.theme">
+        <svg data-theme-icon="sun" class="theme-icon" style="width:19px;height:19px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.2 5.2l1.6 1.6M17.2 17.2l1.6 1.6M18.8 5.2l-1.6 1.6M6.8 17.2l-1.6 1.6"/></svg>
+        <svg data-theme-icon="moon" class="theme-icon" style="width:19px;height:19px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 14.3A8.5 8.5 0 0 1 9.7 3.5a8.5 8.5 0 1 0 10.8 10.8z"/></svg>
+      </button>
       <div class="lang">
         <button class="lang__btn" type="button" data-lang-btn aria-haspopup="true" aria-expanded="false"
                 aria-controls="langMenu" aria-label="Language">

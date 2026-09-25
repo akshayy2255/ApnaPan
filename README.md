@@ -128,11 +128,14 @@ every nav/footer/sitemap reference follows.
 ```bash
 python3 -m pip install playwright && python3 -m playwright install chromium
 cd apnapan && python3 serve.py 8000 --no-open &     # any static server works
-python3 _build/test_header.py     # 73 checks — header, nav, dropdown, drawer, keyboard, a11y
+python3 _build/test_header.py     #  73 checks — header, nav, dropdown, drawer, keyboard, a11y
 python3 _build/test_site.py       # 168 checks — all 24 pages, links, cart, checkout, languages
+python3 _build/test_theme.py      #  80 checks — light/dark mode, contrast, keyboard, print
+python3 _build/diag_theme.py      # contrast audit; optionally: diag_theme.py <url> light
 ```
 
-Both suites exit non-zero on any failure. Use them after touching routing, assets or the header.
+All three suites exit non-zero on any failure. Use them after touching routing, assets, the
+header or the theme.
 
 ### Rebuilding after an edit
 
@@ -183,6 +186,7 @@ This is a **demonstration site**. Every name, number and quote was written for t
 - [ ] **Order confirmation** — the success panel is client-side only; wire real order IDs from your gateway.
 - [ ] **GST invoicing** — no invoice is generated. Add this if you sell B2B.
 - [ ] **Shipping rates** — flat ₹49 / free above ₹599, ₹25 COD fee: `js_data()` in `build.py`.
+- [ ] **Check dark mode on a real phone** — the automated pass is Chromium; the olive and terracotta pairs are the ones to eyeball.
 - [ ] **Terms, privacy, returns** — currently these footer links point at `contact/`. Add real policy pages.
 
 **Forms** (contact, careers, farmers, newsletter, review) validate and confirm on screen but do not submit anywhere. Point them at Formspree / Google Forms / your CRM / a serverless function. Each form has a `data-form="…"` attribute and a `demo.*` notice you can delete.
@@ -219,7 +223,55 @@ This is a **demonstration site**. Every name, number and quote was written for t
 
 **Accessibility** — semantic landmarks and heading order, skip-to-content link, visible focus rings, `aria-current` on the active nav item, `aria-pressed` on all toggles, `aria-selected` tabs, dialog semantics on the cart drawer, ≥44 px touch targets, `prefers-reduced-motion` support, and alt text on every image. Forms use real labels, `aria-invalid` and inline error text.
 
-## 8. Deploying
+## 8. Light and dark mode
+
+The site ships both themes; **light is the default and is unchanged** — all 15 palette tokens
+are byte-identical to the original design, which `test_theme.py` asserts.
+
+**The control.** A sun/moon button sits in the header, next to the language selector. Below
+480px the header has no room for another 40px control, so it moves into the mobile drawer as a
+labelled **Dark mode** switch — one is available at every width either way. Both are `<button>`s
+with `aria-pressed` / `role="switch"` + `aria-checked`, both work with Enter and Space, both show
+the standard focus ring, and the label is translated into Kannada and Hindi like everything else.
+
+**How it behaves.**
+
+- A first visit follows the operating system (`prefers-color-scheme`). Once you choose, your
+  choice wins — `apnapan_theme` in `localStorage`. Until you choose, the page keeps following
+  the OS live.
+- A tiny inline script in `<head>` applies the theme **before the stylesheets load**, so a
+  dark-mode visitor never sees a cream flash.
+- Switching is atomic: transitions are off for one frame while the palette changes, so you
+  never catch light text sitting on the dark page.
+- `color-scheme` and `theme-color` are set as well, so form controls, scrollbars and the mobile
+  browser chrome follow along.
+- Works on `file://`, in private mode and in sandboxed preview iframes — the toggle uses the
+  same storage shim as the cart (§5), so it simply stops remembering when storage is blocked.
+- **Printing always uses the light palette**, whatever the screen shows.
+
+**How it is built (and how to change it).** Everything lives in one clearly-marked block at the
+end of `assets/css/styles.css`, plus a small module near the top of `assets/js/app.js`. The site
+is built on design tokens, so dark mode mostly redefines the primitives:
+
+| Flipped wholesale | Kept as-is |
+|---|---|
+| `--white --sand --sand-deep` (surfaces only, never text), `--ink --ink-soft --ink-mute` (text only, never a surface), `--line --line-strong`, `--terracotta-dark`, `--mustard-dark`, `--green-soft` | `--cream --clay --clay-soft --mustard --mustard-soft --green --terracotta --gold` |
+
+The "kept" tokens are used for **both** surfaces and text-on-dark — `--green` is the topbar
+background *and* the colour of `.loop__item b` — so flipping them would break one of the two.
+The handful of rules that use them as a light background are overridden explicitly, one line
+each with a comment saying why. Keeping it all in one block means dark mode can be reviewed, or
+removed entirely, without touching the light design.
+
+**Contrast.** `test_theme.py` walks every visible text node on eight page types, resolves the
+background actually painted behind it, and fails below WCAG AA (4.5:1, or 3:1 for large text).
+Dark mode reports **0 failures**. Two long-standing light-mode problems were also fixed: a gold
+CTA inside a green section had a cream label at 1.7:1 (effectively invisible), and two small
+labels sat just under AA.
+
+---
+
+## 9. Deploying
 
 Any static host — the build output is plain files:
 

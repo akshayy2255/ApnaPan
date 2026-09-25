@@ -33,6 +33,8 @@ def AP(key):
 ICONS = {
     "cart": '<circle cx="9.5" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M2 3h2.3l2.5 11.1a2 2 0 0 0 2 1.6h8.6a2 2 0 0 0 1.9-1.4L21 7H5"/>',
     "menu": '<path d="M3 6h18M3 12h18M3 18h18"/>',
+    "moon": '<path d="M20.5 14.3A8.5 8.5 0 0 1 9.7 3.5a8.5 8.5 0 1 0 10.8 10.8z"/>',
+    "sun-theme": '<circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.2 5.2l1.6 1.6M17.2 17.2l1.6 1.6M18.8 5.2l-1.6 1.6M6.8 17.2l-1.6 1.6"/>',
     "close": '<path d="M18 6 6 18M6 6l12 12"/>',
     "chev-r": '<path d="M9 5l7 7-7 7"/>',
     "chev-d": '<path d="M6 9l6 6 6-6"/>',
@@ -221,14 +223,27 @@ def head(title, desc, path, css_url, u, jsonld=None, extra=""):
         blocks = jsonld if isinstance(jsonld, list) else [jsonld]
         ld = "\n".join(f'<script type="application/ld+json">{json.dumps(b, ensure_ascii=False)}</script>' for b in blocks)
     return f'''<!DOCTYPE html>
-<html lang="en-IN">
+<html lang="en-IN" data-theme="light">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<script>
+/* Theme before first paint — otherwise a dark-mode visitor gets a cream flash.
+   Runs before the stylesheets; app.js only reads the result afterwards. */
+(function () {{
+  var t = null;
+  try {{ t = localStorage.getItem("apnapan_theme"); }} catch (e) {{}}
+  if (t !== "dark" && t !== "light") {{
+    t = (window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches) ? "dark" : "light";
+  }}
+  document.documentElement.setAttribute("data-theme", t);
+}})();
+</script>
 <title>{E(title)}</title>
 <meta name="description" content="{E(desc)}">
 <link rel="canonical" href="{BRAND["url"]}/{path}">
-<meta name="theme-color" content="#1e4436">
+<meta name="theme-color" id="themeColor" content="#1e4436">
+<meta name="color-scheme" content="light dark">
 <meta name="author" content="{BRAND["legal"]}">
 <meta name="keywords" content="women-led spices, farm to market pickles, ethical sourcing India, Karnataka masala, direct from farmers, ApnaPan, bisibelebath masala, mavina midi pickle">
 <meta property="og:type" content="website">
@@ -321,10 +336,32 @@ def header(active, u, cart_icon_count=True):
         <span class="nav__lang-title">{icon("globe", size=15)} <span {A("nav.language")}>{T("nav.language")}</span></span>
         <ul class="nav__lang-list">{mobile_langs}</ul>
       </div>
+      <div class="nav__theme">
+        <div class="nav__theme-row">
+          <span class="nav__theme-title">
+            {icon("sun-theme", size=16).replace('<svg', '<svg data-theme-icon="sun"', 1)}
+            {icon("moon", size=16).replace('<svg', '<svg data-theme-icon="moon"', 1)}
+            <span {A("nav.theme")}>{T("nav.theme")}</span>
+          </span>
+          <button class="switch" type="button" data-theme-toggle role="switch" aria-checked="false"
+                  aria-label="{T('a11y.theme')}" data-i18n-attr="aria-label:a11y.theme">
+            <span class="switch__knob">
+              {icon("sun-theme", cls="switch__sun", size=13)}
+              {icon("moon", cls="switch__moon", size=13)}
+            </span>
+          </button>
+        </div>
+      </div>
       <a class="btn nav__cta" href="{u(route("shop"))}">{icon("cart")} <span {A("common.shop")}>{T("common.shop")}</span></a>
     </nav>
 
     <div class="header__tools">
+      <button class="icon-btn theme-btn" type="button" data-theme-toggle aria-pressed="false"
+              aria-label="{T('a11y.theme')}" title="{T('a11y.theme')}"
+              data-i18n-attr="aria-label:a11y.theme;title:a11y.theme">
+        {icon("sun-theme", cls="theme-icon", size=19).replace('<svg', '<svg data-theme-icon="sun"', 1)}
+        {icon("moon", cls="theme-icon", size=19).replace('<svg', '<svg data-theme-icon="moon"', 1)}
+      </button>
       <div class="lang">
         <button class="lang__btn" type="button" data-lang-btn aria-haspopup="true" aria-expanded="false"
                 aria-controls="langMenu" aria-label="{T('nav.language')}">

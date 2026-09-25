@@ -912,3 +912,228 @@ hr{border:0;border-top:1px solid var(--line);margin:2.2rem 0}
   .card,.pcard,.stat,.step{box-shadow:none;border-color:#ccc}
   a[href^="http"]::after{content:" (" attr(href) ")";font-size:.75em;color:#555}
 }
+
+/* ============================================================================
+   THEME — light (default) and dark
+   ----------------------------------------------------------------------------
+   The site is built on tokens, so dark mode mostly redefines the same
+   variables. Only three primitives are safe to flip wholesale:
+
+     flipped : --white --sand --sand-deep      (surfaces only, never used as text)
+               --ink --ink-soft --ink-mute     (text only, never used as surface)
+               --line --line-strong            (borders)
+               --terracotta-dark --mustard-dark --green-soft
+     kept     : --cream --clay --clay-soft --mustard --mustard-soft
+                --green --terracotta --gold
+                These are used for BOTH surfaces and text-on-dark, so flipping
+                them would break one of the two. The handful of rules that use
+                them as a light background are overridden explicitly below.
+
+   Everything lives in this one block, so the light theme stays the artwork of
+   record and dark mode can be reviewed (or removed) in one place.
+   ========================================================================= */
+html[data-theme="dark"]{
+  color-scheme:dark;
+
+  /* text — these become light */
+  --ink:#f4ece0;
+  --ink-soft:#d9cbb9;
+  --ink-mute:#a89984;
+
+  /* surfaces — these become dark */
+  --white:#2f2214;          /* cards, inputs, buttons, drawers */
+  --sand:#2a1d0f;
+  --sand-deep:#382816;
+
+  /* borders */
+  --line:#463322;
+  --line-strong:#5e4830;
+
+  /* accents that were tuned for cream backgrounds now need to be light */
+  --terracotta-dark:#eb9a76;
+  --mustard-dark:#f0c878;
+  --green-soft:#1f3129;
+
+  /* semantic aliases follow */
+  --bg:#221809;
+  --fg:var(--ink);
+  --brand:var(--terracotta);
+  --accent:var(--mustard);
+
+  /* depth: on a dark page shadows read as mud, so they go deeper and darker */
+  --shadow-xs:0 1px 2px rgba(0,0,0,.4);
+  --shadow-sm:0 2px 8px rgba(0,0,0,.45),0 1px 2px rgba(0,0,0,.4);
+  --shadow-md:0 12px 28px -14px rgba(0,0,0,.62),0 3px 10px rgba(0,0,0,.4);
+  --shadow-lg:0 30px 60px -30px rgba(0,0,0,.78),0 8px 24px -12px rgba(0,0,0,.55);
+  --shadow-ring:0 0 0 4px rgba(212,105,63,.32);
+}
+
+/* --- rules that used --cream as a light background ------------------------ */
+html[data-theme="dark"] .section--cream{background:var(--bg)}
+html[data-theme="dark"] .nav{background:var(--white)}
+html[data-theme="dark"] .drawer{background:var(--white)}
+html[data-theme="dark"] .to-top{background:var(--white)}
+html[data-theme="dark"] .hero{background:linear-gradient(180deg,#291c0e 0%,var(--bg) 68%)}
+html[data-theme="dark"] .post-hero{background:linear-gradient(180deg,var(--sand),var(--bg))}
+html[data-theme="dark"] .hero__stamp{background:var(--white)}
+html[data-theme="dark"] .tl-item::before{background:var(--bg);box-shadow:0 0 0 4px var(--bg)}
+html[data-theme="dark"] .step--solution{background:linear-gradient(180deg,#33251a,var(--white))}
+
+/* --- other literal colours written for the cream palette ------------------ */
+html[data-theme="dark"] .section--sand{background:linear-gradient(180deg,var(--sand),#261a0c)}
+html[data-theme="dark"] .section--ink{background:#191106}
+html[data-theme="dark"] .site-footer{background:#191106}
+html[data-theme="dark"] .site-header::before{background:rgba(30,21,8,.9)}
+html[data-theme="dark"] .sticky-buybar{background:rgba(30,21,8,.97);box-shadow:0 -8px 24px -18px rgba(0,0,0,.8)}
+html[data-theme="dark"] .scrim{background:rgba(0,0,0,.68)}
+html[data-theme="dark"] .pcard__media{background:linear-gradient(170deg,#33251a,#281c10)}
+html[data-theme="dark"] .pdp__main{background:linear-gradient(170deg,#33251a,#281c10)}
+html[data-theme="dark"] .ps-card--solution{background:linear-gradient(180deg,#33251a,var(--white))}
+html[data-theme="dark"] .placeholder-img{background:repeating-linear-gradient(45deg,var(--sand),var(--sand) 12px,#382816 12px,#382816 24px)}
+html[data-theme="dark"] .pcard__wish{background:rgba(47,34,20,.92)}
+html[data-theme="dark"] .gallery figcaption{background:linear-gradient(180deg,transparent,rgba(12,8,3,.88))}
+html[data-theme="dark"] .marquee{border-color:rgba(244,236,224,.2)}
+
+/* --- interaction states: light tints were cream; they become terracotta ---- */
+html[data-theme="dark"] .nav__link:hover,
+html[data-theme="dark"] .lang__menu button[aria-pressed="true"],
+html[data-theme="dark"] .nav__lang-list button[aria-pressed="true"],
+html[data-theme="dark"] .stat__icon{background:rgba(212,105,63,.16)}
+html[data-theme="dark"] .nav__link[aria-current="page"],
+html[data-theme="dark"] .lang__btn[aria-expanded="true"],
+html[data-theme="dark"] .size-opt[aria-pressed="true"]{background:rgba(212,105,63,.22)}
+html[data-theme="dark"] .lang__btn:hover{background:rgba(212,105,63,.14)}
+html[data-theme="dark"] .pay-opt:has(input:checked){background:rgba(212,105,63,.14)}
+html[data-theme="dark"] .rule,
+html[data-theme="dark"] .lang__menu{border-color:var(--line)}
+html[data-theme="dark"] .tag--terracotta{background:rgba(212,105,63,.18);color:var(--terracotta-dark);border-color:rgba(212,105,63,.42)}
+html[data-theme="dark"] .tag--green,
+html[data-theme="dark"] .active-filters .tag{background:var(--green-soft);color:#9fd0b6;border-color:#2f4d3f}
+html[data-theme="dark"] .tag--gold,
+html[data-theme="dark"] .pill-note,
+html[data-theme="dark"] .ticker-note{background:rgba(233,179,72,.15);color:var(--mustard-dark);border-color:rgba(233,179,72,.4)}
+html[data-theme="dark"] ::selection{background:rgba(233,179,72,.35);color:var(--ink)}
+
+/* --- editorial blocks with cream backgrounds ------------------------------ */
+html[data-theme="dark"] .made-by{background:linear-gradient(135deg,#33251a,#2a1e11);border-color:#4a3722}
+html[data-theme="dark"] .made-by p{color:var(--ink-soft)}
+html[data-theme="dark"] .callout{background:linear-gradient(135deg,#33251a,#2a1e11);border-color:#4a3722;border-left-color:var(--mustard)}
+html[data-theme="dark"] .callout p{color:var(--ink-soft)}
+html[data-theme="dark"] .prose p,
+html[data-theme="dark"] .prose ul,
+html[data-theme="dark"] .prose ol,
+html[data-theme="dark"] .check-list li,
+html[data-theme="dark"] .x-list li{color:var(--ink-soft)}
+/* --green is a dark colour: as *text or iconography* on a dark surface it
+   disappears, and it cannot be flipped (it is a section background too), so
+   the places that use it as ink get an explicit lighter green. */
+html[data-theme="dark"] .loop__item b,
+html[data-theme="dark"] .quote__flag{color:#9ad6b6}
+html[data-theme="dark"] .ps-card--solution h4 svg,
+html[data-theme="dark"] .x-list svg,
+html[data-theme="dark"] .hero__meta svg,
+html[data-theme="dark"] .pcard__reg svg,
+html[data-theme="dark"] .ship-bar svg,
+html[data-theme="dark"] .ing-list svg,
+html[data-theme="dark"] .secure-note svg,
+html[data-theme="dark"] .check-list svg{color:#8fd0ac}
+
+/* --- forms and status messages ------------------------------------------- */
+html[data-theme="dark"] .form-msg--ok{background:rgba(53,107,82,.2);border-color:rgba(124,195,156,.4);color:#a9d8bd}
+html[data-theme="dark"] .form-msg--err{background:rgba(192,57,43,.18);border-color:rgba(212,105,63,.45);color:#f0b4a6}
+html[data-theme="dark"] .field__error,
+html[data-theme="dark"] .cart-line__remove:hover{color:#f0b4a6}
+html[data-theme="dark"] .field.has-error .input,
+html[data-theme="dark"] .field.has-error .select,
+html[data-theme="dark"] .field.has-error .textarea{border-color:#c8695c;background:rgba(192,57,43,.1)}
+
+/* --- buttons: filled accents are light in dark mode, so their text goes dark */
+html[data-theme="dark"] .btn:hover,
+html[data-theme="dark"] .btn--outline:hover{color:#2a1a0c}
+html[data-theme="dark"] .btn--light{--btn-bg:rgba(244,236,224,.12);--btn-bd:rgba(244,236,224,.45)}
+html[data-theme="dark"] .btn--light:hover{background:#f4ece0;border-color:#f4ece0;color:#1f3a2c}
+html[data-theme="dark"] .btn--green:hover,
+html[data-theme="dark"] .btn--wa:hover{color:#fffaf4}
+html[data-theme="dark"] .btn--ghost:hover{background:rgba(212,105,63,.14)}
+
+/* ============================================================================
+   THEME CONTROL — one <button data-theme-toggle> in the header, one switch in
+   the mobile drawer. The sun/moon swap is pure CSS off html[data-theme], so no
+   script runs to change how it looks; JS only flips the attribute.
+   ========================================================================= */
+.theme-btn{overflow:visible}
+.theme-btn [data-theme-icon="moon"]{display:none}
+html[data-theme="dark"] .theme-btn [data-theme-icon="sun"]{display:none}
+html[data-theme="dark"] .theme-btn [data-theme-icon="moon"]{display:block}
+
+.nav__theme{display:none}          /* drawer-only, revealed with the other drawer parts */
+.nav__theme-row{display:flex;align-items:center;justify-content:space-between;gap:1rem}
+.nav__theme-title{display:flex;align-items:center;gap:.45rem;font-size:.74rem;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--ink-mute)}
+.nav__theme-title svg{width:16px;height:16px;flex:none;color:var(--mustard)}
+.nav__theme-title [data-theme-icon="moon"]{display:none}
+html[data-theme="dark"] .nav__theme-title [data-theme-icon="sun"]{display:none}
+html[data-theme="dark"] .nav__theme-title [data-theme-icon="moon"]{display:flex}
+
+.switch{position:relative;width:54px;height:30px;flex:none;border-radius:var(--r-full);
+  border:1px solid var(--line-strong);background:var(--white);cursor:pointer;transition:var(--dur) var(--ease)}
+.switch:hover{border-color:var(--terracotta)}
+.switch__knob{position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;
+  background:var(--terracotta);color:#fffaf4;display:grid;place-items:center;
+  transition:transform var(--dur) var(--ease),background var(--dur)}
+.switch__knob svg{width:13px;height:13px}
+.switch__moon{display:none}
+html[data-theme="dark"] .switch{background:var(--sand-deep);border-color:var(--terracotta)}
+html[data-theme="dark"] .switch__knob{transform:translateX(24px);background:var(--mustard);color:#3a2606}
+html[data-theme="dark"] .switch__sun{display:none}
+html[data-theme="dark"] .switch__moon{display:block}
+@media(hover:none){.switch{height:32px}}
+
+/* --- printing always uses the light palette, whatever the screen shows ----- */
+@media print{
+  html[data-theme="dark"]{
+    --bg:#fff;--fg:#2b211a;--ink:#2b211a;--ink-soft:#444;--ink-mute:#666;
+    --white:#fff;--sand:#fff;--sand-deep:#fff;--line:#ccc;--line-strong:#bbb;
+    --terracotta-dark:#8e3e1d;--mustard-dark:#8a6520;
+  }
+  html[data-theme="dark"] body{background:#fff;color:#2b211a}
+  html[data-theme="dark"] .section--sand,
+  html[data-theme="dark"] .section--cream,
+  html[data-theme="dark"] .section--ink{background:#fff!important;color:#2b211a!important}
+  html[data-theme="dark"] .callout,
+  html[data-theme="dark"] .made-by{background:#fff;border-color:#ccc}
+  html[data-theme="dark"] .callout p,
+  html[data-theme="dark"] .made-by p,
+  html[data-theme="dark"] .prose p,
+  html[data-theme="dark"] .check-list li,
+  html[data-theme="dark"] .x-list li{color:#2b211a}
+}
+
+/* --- where the theme control lives at each size ---------------------------
+   Above 480px the header carries the icon button; on phones it moves into the
+   drawer, where the 360px layout has no room for another 40px control. The
+   drawer switch is available at every size either way. */
+@media(max-width:480px){.theme-btn{display:none}}
+@media(max-width:1100px){
+  .nav__theme{display:block;margin-top:1.1rem;padding-top:1.1rem;border-top:1px solid var(--line)}
+}
+
+/* --- a CTA keeps its own label colour inside tinted sections --------------
+   `.section--green a` was out-specifying `.btn--gold`, leaving the label
+   cream-on-gold (1.7:1) in BOTH themes. This restores the intended dark label. */
+.section--green a.btn{color:var(--btn-fg)}
+.section--green a.btn:hover{color:#2a1a0c}
+
+/* --- small labels that sat just under AA ---------------------------------
+   One line each, and both themes improve: the tokens already flip. */
+.eyebrow--light{color:var(--mustard-dark)}
+.jstep__num{color:var(--terracotta-dark)}
+
+/* --- the switch itself is instant ----------------------------------------
+   Colours on this site animate (--dur), but the page background does not, so a
+   themed cross-fade briefly put light text on a dark page. While this flag is
+   set — for exactly one frame — transitions are off, so the palette changes in
+   one go and no element is ever caught mid-way. */
+html[data-theme-switching] *,
+html[data-theme-switching] *::before,
+html[data-theme-switching] *::after{transition:none!important}
