@@ -27,6 +27,12 @@ STR = {
     "nav.close":           ("Close menu", "ಮೆನು ಮುಚ್ಚಿ", "मेन्यू बंद करें"),
     "nav.language":        ("Language", "ಭಾಷೆ", "भाषा"),
     "nav.cart":            ("Basket", "ಬುಟ್ಟಿ", "टोकरी"),
+    "theme.name":          ("Colour theme", "ಬಣ್ಣದ ಥೀಮ್", "रंग थीम"),
+    "theme.appearance":    ("Appearance", "ಗೋಚರತೆ", "दिखावट"),
+    "theme.light":         ("Light", "ಲೈಟ್", "लाइट"),
+    "theme.dark":          ("Dark", "ಡಾರ್ಕ್", "डार्क"),
+    "theme.toDark":        ("Switch to dark mode", "ಡಾರ್ಕ್ ಮೋಡ್‌ಗೆ ಬದಲಿಸಿ", "डार्क मोड पर जाएँ"),
+    "theme.toLight":       ("Switch to light mode", "ಲೈಟ್ ಮೋಡ್‌ಗೆ ಬದಲಿಸಿ", "लाइट मोड पर जाएँ"),
 
     # --------------------------------------------------------------- common
     "common.shop":         ("Shop our products", "ನಮ್ಮ ಉತ್ಪನ್ನಗಳನ್ನು ಖರೀದಿಸಿ", "हमारे उत्पाद ख़रीदें"),

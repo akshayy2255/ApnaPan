@@ -650,6 +650,70 @@
     if (b) b.setAttribute('aria-pressed', 'true');
   });
 
+  /* ------------------------------------------------------- colour theme
+     Light is the original design; dark is a purely additive stylesheet. The
+     attribute is normally already set by the inline script in <head> (which
+     runs before first paint); this module keeps the controls in sync, saves
+     the choice, and follows the OS while no explicit choice has been made. */
+  var THEME_KEY = 'apnapan_theme';
+  var THEME_COLOR = { light: '#1e4436', dark: '#1c140e' };
+  var mq = null;
+
+  function themeNow() {
+    return document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+  }
+
+  function syncThemeControls(theme) {
+    var goingTo = theme === 'dark' ? 'light' : 'dark';
+    var label = t('theme.to' + goingTo.charAt(0).toUpperCase() + goingTo.slice(1));
+    $$('[data-theme-toggle]').forEach(function (b) {
+      b.setAttribute('aria-pressed', theme === 'dark' ? 'true' : 'false');
+      b.setAttribute('aria-label', label);
+    });
+    $$('[data-theme-set]').forEach(function (b) {
+      b.setAttribute('aria-pressed', b.getAttribute('data-theme-set') === theme ? 'true' : 'false');
+    });
+    var meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', THEME_COLOR[theme]);
+  }
+
+  function applyTheme(theme, persist) {
+    theme = theme === 'dark' ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', theme);
+    if (persist) store.set(THEME_KEY, theme);
+    syncThemeControls(theme);
+  }
+
+  function storedTheme() {
+    var v = store.get(THEME_KEY);
+    return (v === 'dark' || v === 'light') ? v : null;
+  }
+
+  applyTheme(themeNow(), false);
+
+  document.addEventListener('click', function (e) {
+    if (e.target.closest('[data-theme-toggle]')) {
+      applyTheme(themeNow() === 'dark' ? 'light' : 'dark', true);
+      return;
+    }
+    var set = e.target.closest('[data-theme-set]');
+    if (set) applyTheme(set.getAttribute('data-theme-set'), true);
+  });
+
+  /* while the visitor has not chosen for themselves, follow the system */
+  if (window.matchMedia) {
+    mq = window.matchMedia('(prefers-color-scheme: dark)');
+    var onScheme = function (e) { if (!storedTheme()) applyTheme(e.matches ? 'dark' : 'light', false); };
+    if (mq.addEventListener) mq.addEventListener('change', onScheme);
+    else if (mq.addListener) mq.addListener(onScheme);
+  }
+
+  /* the toggle's label is written by JS, so re-translate it on language change */
+  document.addEventListener('apnapan:lang', function (e) {
+    LANG = (e.detail && e.detail.lang) || LANG;
+    syncThemeControls(themeNow());
+  });
+
   /* language switch re-renders the cart & checkout in the chosen tongue */
   document.addEventListener('apnapan:lang', function (e) {
     LANG = e.detail.lang; renderCart(); renderCheckout();

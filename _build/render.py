@@ -69,6 +69,7 @@ ICONS = {
     "scale": '<path d="M12 3v18M7 21h10"/><path d="M12 6 5 9l-2.2 5.2a4 4 0 0 0 7.4 0z"/><path d="M12 6l7 3 2.2 5.2a4 4 0 0 1-7.4 0z"/>',
     "flame": '<path d="M12 21c3.6 0 6-2.3 6-5.4 0-4.6-6-12-6-12s-6 7.4-6 12C6 18.7 8.4 21 12 21z"/><path d="M12 17.5c1.2 0 2-.8 2-1.9 0-1.4-2-3.6-2-3.6s-2 2.2-2 3.6c0 1.1.8 1.9 2 1.9z"/>',
     "seed": '<path d="M12 21c0-6 3.5-10 8-11-1 6.5-4 10-8 11z"/><path d="M12 21C12 15 8.5 11 4 10c1 6.5 4 10 8 11z"/>',
+    "moon": '<path d="M20.5 14.6A8.6 8.6 0 0 1 9.4 3.5a8.6 8.6 0 1 0 11.1 11.1z"/>',
     "sun": '<circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.6M12 19.4V22M2 12h2.6M19.4 12H22M4.9 4.9l1.9 1.9M17.2 17.2l1.9 1.9M19.1 4.9l-1.9 1.9M6.8 17.2l-1.9 1.9"/>',
     "filter": '<path d="M3 5.5h18l-7 8V20l-4-2.5v-4z"/>',
     "trash": '<path d="M4 7h16M9.5 7V4.5h5V7M6.5 7l1 13h9l1-13"/>',
@@ -225,6 +226,12 @@ def head(title, desc, path, css_url, u, jsonld=None, extra=""):
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<script>/* Colour theme, applied before first paint so a dark-mode visitor never sees
+   a light flash. Inline and dependency-free on purpose — it must run first.
+   Storage can throw (private mode, sandboxed frames) and is wrapped. */
+(function(){{var t=null;try{{t=localStorage.getItem("apnapan_theme");}}catch(e){{}}
+if(t!=="dark"&&t!=="light"){{try{{t=(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";}}catch(e){{t="light";}}}}
+document.documentElement.setAttribute("data-theme",t);}})();</script>
 <title>{E(title)}</title>
 <meta name="description" content="{E(desc)}">
 <link rel="canonical" href="{BRAND["url"]}/{path}">
@@ -321,10 +328,19 @@ def header(active, u, cart_icon_count=True):
         <span class="nav__lang-title">{icon("globe", size=15)} <span {A("nav.language")}>{T("nav.language")}</span></span>
         <ul class="nav__lang-list">{mobile_langs}</ul>
       </div>
+      <div class="nav__theme">
+        <span class="nav__theme-title">{icon("sparkle", size=15)} <span {A("theme.appearance")}>{T("theme.appearance")}</span></span>
+        <div class="nav__theme-opts" role="group" aria-label="{T('theme.appearance')}">
+          <button type="button" data-theme-set="light" aria-pressed="false">{icon("sun", size=16)}<span {A("theme.light")}>{T("theme.light")}</span></button>
+          <button type="button" data-theme-set="dark" aria-pressed="false">{icon("moon", size=16)}<span {A("theme.dark")}>{T("theme.dark")}</span></button>
+        </div>
+      </div>
       <a class="btn nav__cta" href="{u(route("shop"))}">{icon("cart")} <span {A("common.shop")}>{T("common.shop")}</span></a>
     </nav>
 
     <div class="header__tools">
+      <button class="icon-btn theme-btn" type="button" data-theme-toggle aria-pressed="false"
+              aria-label="{T('theme.toDark')}" title="{T('theme.name')}">{icon("moon", "ic-moon")}{icon("sun", "ic-sun")}</button>
       <div class="lang">
         <button class="lang__btn" type="button" data-lang-btn aria-haspopup="true" aria-expanded="false"
                 aria-controls="langMenu" aria-label="{T('nav.language')}">

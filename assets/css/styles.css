@@ -193,6 +193,12 @@ hr{border:0;border-top:1px solid var(--line);margin:2.2rem 0}
 .btn--light{--btn-bg:rgba(255,253,249,.14);--btn-fg:var(--cream);--btn-bd:rgba(253,248,240,.5);box-shadow:none}
 .btn--light:hover{background:var(--cream);color:var(--green);border-color:var(--cream)}
 .btn--block{width:100%}
+/* A section-level link colour must not repaint a button's own label: .section--green a
+   has higher specificity than .btn, which turned the gold button's text pale yellow on
+   gold (1.5:1). Buttons inside dark sections keep the label the button asked for. */
+.section--green a.btn{color:var(--btn-fg)}
+.section--green a.btn--outline{--btn-fg:var(--cream);--btn-bd:rgba(253,248,240,.5)}
+.section--green a.btn--outline:hover{color:#fff}
 .btn--wa{--btn-bg:#1f7a4d;--btn-bd:#1f7a4d}
 .btn--wa:hover{background:#17603c;border-color:#17603c}
 .btn-row{display:flex;flex-wrap:wrap;gap:.75rem}
@@ -911,4 +917,239 @@ hr{border:0;border-top:1px solid var(--line);margin:2.2rem 0}
   body{background:#fff}
   .card,.pcard,.stat,.step{box-shadow:none;border-color:#ccc}
   a[href^="http"]::after{content:" (" attr(href) ")";font-size:.75em;color:#555}
+}
+
+/* ==========================================================================
+   COLOUR THEME — light / dark
+   --------------------------------------------------------------------------
+   Light mode is the original design and is untouched by everything below:
+   the dark rules are additive and scoped to html[data-theme="dark"], so the
+   light palette, spacing and layout are byte-identical to before.
+
+   The attribute is set by a tiny inline script in <head> (see render.head)
+   before first paint, so dark-mode visitors never see a light flash.
+
+   Approach: flip the palette tokens first (that covers ~90% of the site,
+   because the design system is token-driven), then patch the handful of rules
+   that hardcode a light value. Anything sitting on a permanently dark surface
+   (green sections, footer, toasts) keeps light text — those subtrees simply
+   re-declare the tokens they need.
+
+   The product photography is already shot on dark wood and studio grounds, so
+   the dark theme suits it; images are left completely untouched.
+   ========================================================================== */
+html{color-scheme:light}
+html[data-theme="dark"]{
+  color-scheme:dark;
+
+  /* palette */
+  --cream:#1c140e;
+  --sand:#241a12;
+  --sand-deep:#2c2016;
+  --white:#251b13;
+  --ink:#f5eee2;
+  --ink-soft:#d8c9b6;
+  --ink-mute:#a5937f;
+  --clay:#6b4f38;
+  --clay-soft:#33261b;
+  --line:#3a2b1f;
+  --line-strong:#4e3a28;
+
+  /* accents, lifted for contrast against a dark ground */
+  --terracotta:#d4704a;
+  --terracotta-dark:#e79070;
+  --terracotta-soft:#a85731;
+  --mustard:#e8b04a;
+  --mustard-dark:#c9922a;
+  --mustard-soft:#3a2c14;
+  --maroon:#c86a52;
+  --gold:#d9a441;
+  --green-soft:#233026;
+
+  /* semantic */
+  --bg:var(--cream);
+  --fg:var(--ink);
+
+  --shadow-xs:0 1px 2px rgba(0,0,0,.34);
+  --shadow-sm:0 2px 8px rgba(0,0,0,.34), 0 1px 2px rgba(0,0,0,.28);
+  --shadow-md:0 12px 28px -14px rgba(0,0,0,.62), 0 3px 10px rgba(0,0,0,.34);
+  --shadow-lg:0 30px 60px -30px rgba(0,0,0,.72), 0 8px 24px -12px rgba(0,0,0,.44);
+  --shadow-ring:0 0 0 4px rgba(212,112,74,.24);
+}
+
+/* ---- sections and surfaces --------------------------------------------- */
+html[data-theme="dark"] .section--sand{background:linear-gradient(180deg,var(--sand),#1f1610)}
+html[data-theme="dark"] .section--cream{background:var(--cream)}
+html[data-theme="dark"] .hero{background:linear-gradient(180deg,#241a11 0%,var(--cream) 68%)}
+html[data-theme="dark"] .ps-card--solution{background:linear-gradient(180deg,#2b2016,var(--white))}
+html[data-theme="dark"] .pcard__media{background:linear-gradient(170deg,#2b2015,#221810)}
+html[data-theme="dark"] .pdp__main{background:linear-gradient(170deg,#2b2015,#221810)}
+html[data-theme="dark"] .placeholder-img{
+  background:repeating-linear-gradient(45deg,var(--sand),var(--sand) 12px,#2c2016 12px,#2c2016 24px)}
+/* the footer and ink sections go a shade deeper than the page so they still read as bands */
+html[data-theme="dark"] .site-footer,
+html[data-theme="dark"] .section--ink{background:#150f0a}
+html[data-theme="dark"] .section--ink{color:#cfc0ae}
+
+/* ---- warm tints that were hardcoded light ------------------------------- */
+html[data-theme="dark"] .tag--terracotta,
+html[data-theme="dark"] .lang__btn[aria-expanded="true"],
+html[data-theme="dark"] .nav__link[aria-current="page"],
+html[data-theme="dark"] .size-opt[aria-pressed="true"]{background:#3a2318;color:var(--terracotta-dark);border-color:#5a3a26}
+html[data-theme="dark"] .tag--terracotta{border-color:#5a3a26}
+html[data-theme="dark"] .lang__btn:hover,
+html[data-theme="dark"] .pay-opt:has(input:checked){background:#31211a;color:var(--terracotta-dark);border-color:var(--terracotta)}
+html[data-theme="dark"] .made-by{background:linear-gradient(135deg,#2e2114,#332617);border-color:#4a3722}
+html[data-theme="dark"] .made-by p{color:var(--ink-soft)}
+html[data-theme="dark"] .callout{background:linear-gradient(135deg,#2e2114,#332617);border-color:#4a3722}
+html[data-theme="dark"] .callout p{color:var(--ink-soft)}
+html[data-theme="dark"] .pill-note,
+html[data-theme="dark"] .tag--gold,
+html[data-theme="dark"] .ticker-note{background:var(--mustard-soft);color:#f0c877;border-color:#6b5324}
+html[data-theme="dark"] .tag--green,
+html[data-theme="dark"] .active-filters .tag{background:var(--green-soft);color:#a6cdb6;border-color:#39533f}
+
+/* ---- long-form copy on dark paper --------------------------------------- */
+html[data-theme="dark"] .prose p,
+html[data-theme="dark"] .prose ul,
+html[data-theme="dark"] .prose ol,
+html[data-theme="dark"] .prose li,
+html[data-theme="dark"] .check-list li,
+html[data-theme="dark"] .x-list li{color:var(--ink-soft)}
+html[data-theme="dark"] .prose strong,
+html[data-theme="dark"] .prose h2,
+html[data-theme="dark"] .prose h3{color:var(--ink)}
+
+/* ---- form states -------------------------------------------------------- */
+html[data-theme="dark"] .form-msg--ok{background:#1d2b22;border-color:#33513e;color:#a9d6ba}
+html[data-theme="dark"] .form-msg--err{background:#33201c;border-color:#5d3229;color:#f0a99e}
+html[data-theme="dark"] .field__error,
+html[data-theme="dark"] .cart-line__remove:hover{color:#f0a99e}
+html[data-theme="dark"] .field.has-error .input,
+html[data-theme="dark"] .field.has-error .select,
+html[data-theme="dark"] .field.has-error .textarea{border-color:#c05a44;box-shadow:0 0 0 4px rgba(192,90,68,.18)}
+
+/* ---- buttons that invert on purpose ------------------------------------- */
+html[data-theme="dark"] .btn--light:hover{background:#f6efe3;color:#1e4436;border-color:#f6efe3}
+html[data-theme="dark"] .btn--outline{--btn-fg:var(--ink)}
+html[data-theme="dark"] .btn--ghost:hover{background:rgba(212,112,74,.14)}
+
+/* ---- permanently dark surfaces keep their light text --------------------
+   These subtrees re-declare the tokens they rely on, so any light-mode text
+   colour inside them stays light instead of inverting to near-black. */
+html[data-theme="dark"] .topbar,
+html[data-theme="dark"] .marquee,
+html[data-theme="dark"] .section--green,
+html[data-theme="dark"] .newsletter,
+html[data-theme="dark"] .banner,
+html[data-theme="dark"] .toast,
+html[data-theme="dark"] .skip-link,
+html[data-theme="dark"] .site-footer,
+html[data-theme="dark"] .step__kicker b,
+html[data-theme="dark"] .chip[aria-pressed="true"],
+html[data-theme="dark"] .checkout-card h3 .step-no{
+  --cream:#f6efe3;
+  --ink:#f6efe3;
+  --ink-soft:#e6dacb;
+  --ink-mute:#c9b9a7;
+  --mustard-soft:#f7e3b4;
+  --clay-soft:#d3c4b1;
+  --line:rgba(253,248,240,.16);
+  --line-strong:rgba(253,248,240,.26);
+}
+/* inputs inside those dark cards need a dark field again */
+html[data-theme="dark"] .newsletter .input,
+html[data-theme="dark"] .newsletter .textarea,
+html[data-theme="dark"] .banner .input{background:#1c140e;color:var(--ink);border-color:rgba(253,248,240,.24)}
+
+/* ---- brand colours used as ink rather than as a fill ---------------------
+   --green stays dark because it is mostly a *background* (topbar, newsletter,
+   footer, chips). Where it is used as ink on paper it needs lifting, so those
+   rules are re-pointed at --green-ink. Same idea for --terracotta on hover. */
+html[data-theme="dark"]{
+  --green-ink:#9dc3a6;
+}
+html[data-theme="dark"] a:hover,
+html[data-theme="dark"] .breadcrumb a:hover,
+html[data-theme="dark"] .share-row a:hover,
+html[data-theme="dark"] .share-row button:hover{color:var(--terracotta-dark)}
+html[data-theme="dark"] .hero__meta svg,
+html[data-theme="dark"] .ps-card--solution h4 svg,
+html[data-theme="dark"] .pcard__reg svg,
+html[data-theme="dark"] .ship-bar svg,
+html[data-theme="dark"] .ing-list svg,
+html[data-theme="dark"] .secure-note svg,
+html[data-theme="dark"] .check-list svg,
+html[data-theme="dark"] .loop__item b,
+html[data-theme="dark"] .quote__flag,
+html[data-theme="dark"] .hero__badge-float{color:var(--green-ink)}
+html[data-theme="dark"] .hero__badge-float{background:rgba(37,27,19,.94)}
+/* the primary button keeps a deeper terracotta in dark: the lifted --terracotta
+   reads well as ink but leaves cream text at only 3.2:1 behind it */
+html[data-theme="dark"] .btn{--btn-bg:#a8532f;--btn-bd:#a8532f}
+html[data-theme="dark"] .btn:hover{background:#bb5f38;border-color:#bb5f38;color:#fffaf4}
+html[data-theme="dark"] .btn--outline{border-color:var(--line-strong)}
+html[data-theme="dark"] .btn--outline:hover{background:#a8532f;border-color:#a8532f;color:#fffaf4}
+/* the rule above is broad, so the variants are restated straight after it —
+   later in the file with the same specificity, so they keep their own colours */
+html[data-theme="dark"] .btn--gold{--btn-bg:var(--mustard);--btn-bd:var(--mustard);--btn-fg:#3a2606}
+html[data-theme="dark"] .btn--gold:hover{background:var(--mustard-dark);border-color:var(--mustard-dark);color:#2b1a06}
+html[data-theme="dark"] .btn--green{--btn-bg:var(--green);--btn-bd:var(--green);--btn-fg:#f4ede1}
+html[data-theme="dark"] .btn--wa{--btn-bg:#1f7a4d;--btn-bd:#1f7a4d;--btn-fg:#fffaf4}
+html[data-theme="dark"] .btn--light{--btn-bg:rgba(255,253,249,.14);--btn-fg:var(--cream);--btn-bd:rgba(253,248,240,.5)}
+
+/* ---- chrome whose background was hardcoded light -------------------------
+   These three sit on top of the page rather than inside a section, so the
+   token flip never reached them: the sticky header, the sticky buy bar and the
+   wishlist / play buttons that sit over photography. */
+html[data-theme="dark"] .site-header::before{background:rgba(28,20,14,.92)}
+html[data-theme="dark"] .sticky-buybar{background:rgba(28,20,14,.97);
+  box-shadow:0 -8px 24px -18px rgba(0,0,0,.7)}
+html[data-theme="dark"] .pcard__wish{background:rgba(37,27,19,.92)}
+/* over-photo buttons sit on the washed-out image frame, which stays light */
+html[data-theme="dark"] .lang__menu{box-shadow:0 24px 50px -24px rgba(0,0,0,.8)}
+
+/* ---- printing -------------------------------------------------------------
+   Nobody wants a solid espresso page coming out of a printer, so print always
+   uses the light palette and light text, whatever the screen is showing. */
+@media print{
+  html[data-theme="dark"]{
+    --cream:#fff; --sand:#fff; --sand-deep:#f2f2f2; --white:#fff;
+    --ink:#000; --ink-soft:#222; --ink-mute:#555;
+    --line:#ccc; --line-strong:#bbb; --clay:#ddd; --clay-soft:#f5f5f5;
+    --green-ink:#1e4436;
+  }
+  html[data-theme="dark"] body,
+  html[data-theme="dark"] .section--cream,
+  html[data-theme="dark"] .section--sand,
+  html[data-theme="dark"] .section--sand-deep,
+  html[data-theme="dark"] .hero{background:#fff !important;background-image:none !important}
+  html[data-theme="dark"] .site-header::before,
+  html[data-theme="dark"] .sticky-buybar{background:#fff !important}
+}
+
+/* ---- the header control --------------------------------------------------
+   Both icons ship in the button; the theme decides which one shows. In light
+   mode you see a moon (the mode you would switch to), in dark a sun. That way
+   the button works with JavaScript off — it just cannot be clicked. */
+.theme-btn{display:none}
+@media(min-width:561px){.theme-btn{display:inline-flex}}
+.theme-btn svg{width:19px;height:19px}
+.theme-btn .ic-sun{display:none}
+html[data-theme="dark"] .theme-btn .ic-moon{display:none}
+html[data-theme="dark"] .theme-btn .ic-sun{display:block}
+.theme-btn:active{transform:translateY(0)}
+
+/* ---- appearance block in the mobile drawer ------------------------------ */
+.nav__theme{display:none}
+.nav__theme-title{display:flex;align-items:center;gap:.45rem;font-size:.74rem;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--ink-mute);margin-bottom:.55rem}
+.nav__theme-opts{display:grid;grid-template-columns:1fr 1fr;gap:.45rem}
+.nav__theme-opts button{display:flex;align-items:center;justify-content:center;gap:.4rem;min-height:44px;
+  border:1px solid var(--line);border-radius:var(--r-sm);background:var(--white);color:var(--ink-soft);
+  font-size:.86rem;font-weight:600;cursor:pointer;transition:var(--dur) var(--ease)}
+.nav__theme-opts button:hover{border-color:var(--terracotta);color:var(--terracotta-dark)}
+.nav__theme-opts button[aria-pressed="true"]{background:var(--green);border-color:var(--green);color:var(--cream);font-weight:600}
+@media(max-width:1100px){
+  .nav__theme{display:block;margin-top:1.1rem;padding-top:1.1rem;border-top:1px solid var(--line)}
 }

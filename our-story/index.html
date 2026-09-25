@@ -3,6 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<script>/* Colour theme, applied before first paint so a dark-mode visitor never sees
+   a light flash. Inline and dependency-free on purpose — it must run first.
+   Storage can throw (private mode, sandboxed frames) and is wrapped. */
+(function(){var t=null;try{t=localStorage.getItem("apnapan_theme");}catch(e){}
+if(t!=="dark"&&t!=="light"){try{t=(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";}catch(e){t="light";}}
+document.documentElement.setAttribute("data-theme",t);})();</script>
 <title>Our Story — ApnaPan</title>
 <meta name="description" content="How ApnaPan started with six women in a rented kitchen in Doddaballapur and grew into a women-run food processing company sourcing from 480 Karnataka farmers.">
 <link rel="canonical" href="https://akshayy2255.github.io/ApnaPan/our-story/">
@@ -85,10 +91,19 @@
           <li><button type="button" data-lang="kn" aria-pressed="false"><span>Kannada</span><span class="native">ಕನ್ನಡ</span></button></li>
           <li><button type="button" data-lang="hi" aria-pressed="false"><span>Hindi</span><span class="native">हिन्दी</span></button></li></ul>
       </div>
+      <div class="nav__theme">
+        <span class="nav__theme-title"><svg class="" style="width:15px;height:15px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v6M12 15v6M3 12h6M15 12h6M6.3 6.3l3 3M14.7 14.7l3 3M17.7 6.3l-3 3M9.3 14.7l-3 3"/></svg> <span data-i18n="theme.appearance">Appearance</span></span>
+        <div class="nav__theme-opts" role="group" aria-label="Appearance">
+          <button type="button" data-theme-set="light" aria-pressed="false"><svg class="" style="width:16px;height:16px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.6M12 19.4V22M2 12h2.6M19.4 12H22M4.9 4.9l1.9 1.9M17.2 17.2l1.9 1.9M19.1 4.9l-1.9 1.9M6.8 17.2l-1.9 1.9"/></svg><span data-i18n="theme.light">Light</span></button>
+          <button type="button" data-theme-set="dark" aria-pressed="false"><svg class="" style="width:16px;height:16px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 14.6A8.6 8.6 0 0 1 9.4 3.5a8.6 8.6 0 1 0 11.1 11.1z"/></svg><span data-i18n="theme.dark">Dark</span></button>
+        </div>
+      </div>
       <a class="btn nav__cta" href="../shop/"><svg class="" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9.5" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M2 3h2.3l2.5 11.1a2 2 0 0 0 2 1.6h8.6a2 2 0 0 0 1.9-1.4L21 7H5"/></svg> <span data-i18n="common.shop">Shop our products</span></a>
     </nav>
 
     <div class="header__tools">
+      <button class="icon-btn theme-btn" type="button" data-theme-toggle aria-pressed="false"
+              aria-label="Switch to dark mode" title="Colour theme"><svg class="ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 14.6A8.6 8.6 0 0 1 9.4 3.5a8.6 8.6 0 1 0 11.1 11.1z"/></svg><svg class="ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.6M12 19.4V22M2 12h2.6M19.4 12H22M4.9 4.9l1.9 1.9M17.2 17.2l1.9 1.9M19.1 4.9l-1.9 1.9M6.8 17.2l-1.9 1.9"/></svg></button>
       <div class="lang">
         <button class="lang__btn" type="button" data-lang-btn aria-haspopup="true" aria-expanded="false"
                 aria-controls="langMenu" aria-label="Language">

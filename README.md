@@ -96,7 +96,7 @@ apnapan/
 ├── start-mac-linux.sh         Double-click launcher
 ├── start-windows.bat          Double-click launcher
 ├── assets/
-│   ├── css/styles.css         Design system (tokens, components, responsive, print)
+│   ├── css/styles.css         Design system (tokens, components, responsive, print, theme)
 │   ├── css/fonts.css          Self-hosted webfonts (Marcellus, Inter, Noto Kannada/Devanagari)
 │   ├── fonts/*.woff2          7 files, 404 KB total
 │   ├── js/app.js              Cart, filters, tabs, counters, forms, checkout, nav/drawer/dropdown
@@ -128,11 +128,12 @@ every nav/footer/sitemap reference follows.
 ```bash
 python3 -m pip install playwright && python3 -m playwright install chromium
 cd apnapan && python3 serve.py 8000 --no-open &     # any static server works
-python3 _build/test_header.py     # 73 checks — header, nav, dropdown, drawer, keyboard, a11y
+python3 _build/test_header.py     #  94 checks — header, nav, dropdown, drawer, keyboard, a11y, theme
 python3 _build/test_site.py       # 168 checks — all 24 pages, links, cart, checkout, languages
+python3 _build/audit_contrast.py  # WCAG contrast of every text element, both themes
 ```
 
-Both suites exit non-zero on any failure. Use them after touching routing, assets or the header.
+All suites exit non-zero on any failure. Use them after touching routing, assets, the header or the theme.
 
 ### Rebuilding after an edit
 
@@ -219,7 +220,75 @@ This is a **demonstration site**. Every name, number and quote was written for t
 
 **Accessibility** — semantic landmarks and heading order, skip-to-content link, visible focus rings, `aria-current` on the active nav item, `aria-pressed` on all toggles, `aria-selected` tabs, dialog semantics on the cart drawer, ≥44 px touch targets, `prefers-reduced-motion` support, and alt text on every image. Forms use real labels, `aria-invalid` and inline error text.
 
-## 8. Deploying
+## 8. Light and dark mode
+
+The site ships both. Light is the original design; dark is a **purely additive
+stylesheet** at the end of `assets/css/styles.css`, so nothing about the light theme
+was changed to make dark possible — verified by diffing every computed colour on
+twelve pages against the previous build: three differences in total, all the
+gold-button label fix described below.
+
+**How it works.** A small inline script in `<head>` (in `render.head`) sets
+`data-theme` on `<html>` before the first paint, so a dark-mode visitor never sees a
+light flash. It reads `apnapan_theme` from `localStorage`; with no saved choice it
+follows the operating system's `prefers-color-scheme`, and keeps following it until
+the visitor chooses for themselves. The choice then sticks across pages and reloads.
+Storage access is wrapped, so this still works in private mode, in a sandboxed frame
+and from `file://`.
+
+**The control.** A moon / sun icon button in the header, beside the language
+switcher. Both icons ship in the button and CSS shows one, so it looks right even
+with JavaScript off. It carries `aria-pressed` and an `aria-label` naming the mode
+you would switch *to*, translated into all three languages. Below 561px the header
+runs out of room, so the header button hides and an **Appearance** block with
+explicit Light / Dark buttons takes its place in the mobile drawer — a full-width
+control is a better thumb target than a 40px circle.
+
+**How the dark palette was derived.** The design system is token-driven, so this is
+mostly a matter of re-declaring the palette:
+
+| Token | Light | Dark | Why |
+|---|---|---|---|
+| `--cream`, `--sand`, `--white` | warm off-whites | `#1c140e`, `#241a12`, `#251b13` | espresso-brown paper |
+| `--ink`, `--ink-soft`, `--ink-mute` | near-black browns | cream, then muted tans | body text |
+| `--terracotta`, `--terracotta-dark` | `#b4552d`, `#8e3e1d` | `#d4704a`, `#e79070` | lifted so accents stay legible as ink |
+| `--mustard` | `#e3a62b` | `#e8b04a` | ditto |
+| `--green` | `#1e4436` | unchanged | it is a *background* almost everywhere (topbar, footer, newsletter, chips) |
+
+Three things needed care, and are the reason to read the code before editing it:
+
+1. **A token that is ink in one place and a fill in another.** `--green` is the
+   topbar and footer background *and* the colour of small icons and headings. It
+   cannot be lightened without breaking the dark bands, so a second token,
+   `--green-ink`, carries the ink use and is lifted only in dark mode.
+2. **Permanently dark surfaces.** The topbar, marquee, green sections, newsletter,
+   footer, banners and toasts keep light text in both themes, so they re-declare the
+   tokens they need instead of inheriting the flipped ones. Without that, `--cream`
+   text on a green band would have turned near-black and disappeared.
+3. **Hardcoded light values.** The sticky header's frosted background, the mobile
+   buy bar and the over-photo buttons were literal `rgba(253,248,240,…)`. They never
+   consulted the palette and are overridden explicitly.
+
+The product photography is shot on dark wood and studio grounds, so images are left
+completely untouched in dark mode — they sit better there than on cream.
+
+**Printing** always uses the light palette whatever the screen shows, so a printer
+never receives a full-bleed espresso page.
+
+**Contrast.** `_build/audit_contrast.py` measures every visible text element against
+its real composited background, on 13 pages, in both themes, against WCAG AA (4.5:1
+body, 3:1 large). Dark mode passes completely — 0 failures. Light mode reports ~379
+failures inherited from the original design, about 96% of them a single cause:
+`--ink-mute` renders at 4.07:1 on cards, a hair under AA. That is the existing
+muted grey, not something this feature introduced, and it was deliberately left
+alone so the light theme stays exactly as designed. The audit did find and fix one
+genuine bug: inside green sections `.section--green a` out-specified `.btn`, so the
+gold button's label was pale yellow on gold, 1.55:1. Buttons now keep the label
+colour they ask for, in both themes.
+
+---
+
+## 9. Deploying
 
 Any static host — the build output is plain files:
 

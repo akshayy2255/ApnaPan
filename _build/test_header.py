@@ -144,6 +144,69 @@ def main():
         ow = page.evaluate("document.documentElement.scrollWidth - document.documentElement.clientWidth")
         check("no horizontal overflow", ow <= 1, f"{ow}px")
 
+        # ================================================== colour theme
+        print("\n[7c] Colour theme")
+        head_part = page.content().split("</head>")[0]
+        check("theme is set by an inline script before the stylesheet (no flash)",
+              "apnapan_theme" in head_part
+              and head_part.index("apnapan_theme") < head_part.index("assets/css/styles.css"))
+        check("pre-paint attribute is present",
+              page.evaluate("document.documentElement.getAttribute('data-theme')") in ("light", "dark"),
+              page.evaluate("document.documentElement.getAttribute('data-theme')"))
+
+        tbtn = page.locator(".theme-btn")
+        check("header toggle is visible on desktop", tbtn.is_visible())
+        check("starts in light with the moon showing",
+              page.evaluate("document.documentElement.dataset.theme") == "light"
+              and tbtn.locator(".ic-moon").is_visible() and not tbtn.locator(".ic-sun").is_visible())
+        bg_light = page.evaluate("getComputedStyle(document.body).backgroundColor")
+        tbtn.click()
+        time.sleep(0.35)
+        check("click switches to dark",
+              page.evaluate("document.documentElement.dataset.theme") == "dark")
+        check("body actually repaints dark",
+              page.evaluate("getComputedStyle(document.body).backgroundColor") != bg_light,
+              page.evaluate("getComputedStyle(document.body).backgroundColor"))
+        check("swaps to the sun icon",
+              tbtn.locator(".ic-sun").is_visible() and not tbtn.locator(".ic-moon").is_visible())
+        check("reports its state and the next action",
+              tbtn.get_attribute("aria-pressed") == "true"
+              and "light" in (tbtn.get_attribute("aria-label") or "").lower(),
+              tbtn.get_attribute("aria-label"))
+        check("choice is saved", page.evaluate("localStorage.getItem('apnapan_theme')") == "dark")
+        check("browser title bar follows the theme",
+              page.evaluate("document.querySelector('meta[name=theme-color]').content") == "#1c140e")
+
+        page.goto(BASE + "/shop/", wait_until="networkidle")
+        time.sleep(0.25)
+        check("survives navigation to another page",
+              page.evaluate("document.documentElement.dataset.theme") == "dark")
+        page.reload(wait_until="networkidle")
+        time.sleep(0.25)
+        check("survives a reload", page.evaluate("document.documentElement.dataset.theme") == "dark")
+        check("no horizontal overflow in dark",
+              page.evaluate("document.documentElement.scrollWidth - document.documentElement.clientWidth") <= 1)
+
+        # the header frosting must go dark too, or it flashes light over content
+        page.evaluate("window.scrollTo(0, 1200)")
+        time.sleep(0.4)
+        frost = page.evaluate("getComputedStyle(document.querySelector('.site-header'),'::before').backgroundColor")
+        check("sticky header frosting is dark in dark mode", "28, 20, 14" in frost, frost)
+
+        page.locator(".theme-btn").click()
+        time.sleep(0.3)
+        check("toggles back to light",
+              page.evaluate("document.documentElement.dataset.theme") == "light")
+
+        # honours the operating system when the visitor has not chosen for themselves
+        ctx_sys = browser.new_context(viewport={"width": 1280, "height": 900}, color_scheme="dark")
+        psys = ctx_sys.new_page()
+        psys.goto(BASE + "/", wait_until="domcontentloaded")
+        check("follows the OS preference when nothing is stored",
+              psys.evaluate("document.documentElement.dataset.theme") == "dark",
+              psys.evaluate("document.documentElement.dataset.theme"))
+        ctx_sys.close()
+
         # ================================================== mobile
         print("\n[8] Mobile (390x844)")
         m = browser.new_context(viewport={"width": 390, "height": 844}, is_mobile=True,
@@ -165,6 +228,20 @@ def main():
         check("drawer opens", m.locator(".nav__list").is_visible())
         check("hamburger aria-expanded=true", burger.get_attribute("aria-expanded") == "true")
         check("drawer lists all 9 links", m.locator(".nav__list a.nav__link").count() == 9)
+        check("drawer offers Appearance with both modes",
+              m.locator(".nav__theme").is_visible() and m.locator("[data-theme-set]").count() == 2)
+        check("drawer marks the current mode",
+              m.get_attribute('[data-theme-set="light"]', "aria-pressed") == "true")
+        check("header toggle is hidden on a phone (drawer takes over)",
+              not m.locator(".theme-btn").is_visible())
+        m.locator('[data-theme-set="dark"]').click()
+        time.sleep(0.35)
+        check("switching from the drawer works",
+              m.evaluate("document.documentElement.dataset.theme") == "dark")
+        check("drawer marks the new mode",
+              m.get_attribute('[data-theme-set="dark"]', "aria-pressed") == "true")
+        m.locator('[data-theme-set="light"]').click()
+        time.sleep(0.3)
         check("drawer has a language section", m.locator(".nav__lang").is_visible())
         check("drawer language has 3 options", m.locator(".nav__lang-list button").count() == 3)
         check("drawer Shop CTA visible", m.locator(".nav__cta").is_visible())
