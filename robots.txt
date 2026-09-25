@@ -2,5 +2,4 @@
 User-agent: *
 Allow: /
 Disallow: /checkout/
-Disallow: /dashboard/
 Sitemap: https://akshayy2255.github.io/ApnaPan/sitemap.xml

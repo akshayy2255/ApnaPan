@@ -144,14 +144,6 @@ def main():
         ow = page.evaluate("document.documentElement.scrollWidth - document.documentElement.clientWidth")
         check("no horizontal overflow", ow <= 1, f"{ow}px")
 
-        # ================================================== dashboard entry points
-        print("\n[7b] Dashboard entry points")
-        check("utility bar links to the dashboard",
-              page.locator(".topbar__dash").count() == 1
-              and page.locator(".topbar__dash").get_attribute("href").endswith("dashboard/"))
-        check("dashboard link is a real link",
-              page.evaluate("document.querySelector('.topbar__dash').tagName") == "A")
-
         # ================================================== mobile
         print("\n[8] Mobile (390x844)")
         m = browser.new_context(viewport={"width": 390, "height": 844}, is_mobile=True,
@@ -173,9 +165,6 @@ def main():
         check("drawer opens", m.locator(".nav__list").is_visible())
         check("hamburger aria-expanded=true", burger.get_attribute("aria-expanded") == "true")
         check("drawer lists all 9 links", m.locator(".nav__list a.nav__link").count() == 9)
-        check("drawer links to the dashboard",
-              m.locator(".nav__dash").is_visible()
-              and m.locator(".nav__dash").get_attribute("href").endswith("dashboard/"))
         check("drawer has a language section", m.locator(".nav__lang").is_visible())
         check("drawer language has 3 options", m.locator(".nav__lang-list button").count() == 3)
         check("drawer Shop CTA visible", m.locator(".nav__cta").is_visible())

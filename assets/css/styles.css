@@ -306,7 +306,7 @@ hr{border:0;border-top:1px solid var(--line);margin:2.2rem 0}
 .burger{display:none}
 /* Navigation: desktop shows the inline row; below 1100px the same markup
    becomes an off-canvas drawer. One nav component, two presentations. */
-.nav__head,.nav__lang,.nav__cta,.nav__dash{display:none}   /* drawer-only parts of the one nav */
+.nav__head,.nav__lang,.nav__cta{display:none}
 
 @media(min-width:1101px) and (max-width:1340px){
   .nav__link{padding:.45rem .5rem;font-size:.86rem}
@@ -335,11 +335,6 @@ hr{border:0;border-top:1px solid var(--line);margin:2.2rem 0}
   .nav__link{padding:.72rem .85rem;font-size:1.02rem;border-radius:var(--r-sm);justify-content:flex-start;min-height:46px}
   .nav__link:hover{background:var(--sand)}
   .nav__link::after{display:none}
-  .nav__dash{display:flex;align-items:center;justify-content:center;gap:.45rem;margin-top:.6rem;padding:.7rem;
-    border:1px dashed var(--line-strong);border-radius:var(--r-full);color:var(--ink-mute);font-size:.86rem;
-    font-weight:600;text-decoration:none;transition:color var(--dur),border-color var(--dur)}
-  .nav__dash:hover{color:var(--terracotta-dark);border-color:var(--terracotta);border-style:solid}
-  .nav__dash:focus-visible{outline:2px solid var(--terracotta);outline-offset:2px}
   .nav__cta{display:inline-flex;margin-top:1rem}
   .nav__lang{display:block;margin-top:1.1rem;padding-top:1.1rem;border-top:1px solid var(--line)}
   .nav__lang-title{display:flex;align-items:center;gap:.45rem;font-size:.74rem;letter-spacing:.14em;

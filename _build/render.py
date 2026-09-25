@@ -296,7 +296,6 @@ def header(active, u, cart_icon_count=True):
       </a>
       <a class="topbar__extra" href="{u(route("farmers"))}" {A("nav.farmers")}>{T("nav.farmers")}</a>
       <a class="topbar__extra" href="{u(route("careers"))}" {A("nav.careers")}>{T("nav.careers")}</a>
-      <a class="topbar__extra topbar__dash" href="{u("dashboard/")}" {A("nav.dashboard")}>{T("nav.dashboard")}</a>
     </div>
   </div>
 </div>
@@ -323,7 +322,6 @@ def header(active, u, cart_icon_count=True):
         <ul class="nav__lang-list">{mobile_langs}</ul>
       </div>
       <a class="btn nav__cta" href="{u(route("shop"))}">{icon("cart")} <span {A("common.shop")}>{T("common.shop")}</span></a>
-      <a class="nav__dash" href="{u("dashboard/")}">{icon("lock", size=16)} <span {A("nav.dashboard")}>{T("nav.dashboard")}</span></a>
     </nav>
 
     <div class="header__tools">
