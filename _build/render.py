@@ -272,13 +272,39 @@ def header(active, u, cart_icon_count=True):
     """
     nav_items = []
     for n in NAV:
-        key = n["route"]
-        is_current = (n["key"] == active)
-        cur = ' aria-current="page"' if is_current else ""
+        children = n.get("children")
+        if not children:
+            key = n["route"]
+            cur = ' aria-current="page"' if n["key"] == active else ""
+            nav_items.append(
+                f'<li class="nav__item"><a class="nav__link" href="{u(route(key))}"{cur} {A(n["key"])}>{T(n["key"])}</a></li>'
+            )
+            continue
+
+        # A group: the trigger is a <button> (it opens a panel, it does not
+        # navigate), the four destinations are real <a> elements inside it.
+        # aria-expanded + aria-controls, deliberately without aria-haspopup:
+        # the panel is a list of links, not a role="menu" of commands.
+        group_id = n["key"].split(".")[-1]
+        inside = any(c["key"] == active for c in children)
+        cur = ' data-current="true"' if inside else ""
+        sub = "\n            ".join(
+            f'<li><a class="nav__sublink" href="{u(route(c["route"]))}"'
+            f'{" aria-current=\"page\"" if c["key"] == active else ""} {A(c["key"])}>{T(c["key"])}</a></li>'
+            for c in children)
         nav_items.append(
-            f'<li><a class="nav__link" href="{u(route(key))}"{cur} {A(n["key"])}>{T(n["key"])}</a></li>'
+            f"""<li class="nav__item nav__item--group" data-nav-group="{group_id}">
+          <button class="nav__link nav__link--btn" type="button" data-nav-menu-btn
+                  aria-expanded="false" aria-controls="{group_id}Menu"{cur}>
+            <span {A(n["key"])}>{T(n["key"])}</span>{icon("chev-d", "nav__caret", 14)}
+          </button>
+          <ul class="nav__menu" id="{group_id}Menu" data-nav-menu="{group_id}" aria-label="{T(n['key'])}">
+            {sub}
+          </ul>
+        </li>"""
         )
     nav_links = "\n        ".join(nav_items)
+
 
     langs = "\n".join(
         f'<li><button type="button" data-lang="{l["code"]}" aria-pressed="{"true" if l["code"]=="en" else "false"}">'
@@ -377,10 +403,13 @@ def marquee():
 
 def footer(u):
     shop_links = "".join(f'<li><a href="{u(route("shop") + "?cat=" + c["id"])}">{E(c["label"])}</a></li>' for c in live_categories())
-    co_links = [
-        ("nav.story", "story"), ("nav.impact", "impact"), ("nav.how", "how"),
-        ("nav.blog", "blog"), ("nav.careers", "careers"), ("nav.farmers", "farmers"),
-    ]
+    # The four pages that live under "About" in the header get their own footer
+    # column, so they are one click away even if nobody opens the dropdown.
+    about = "".join(
+        f'<li><a href="{u(route(h))}" {A(k)}>{T(k)}</a></li>'
+        for k, h in [("nav.story", "story"), ("nav.impact", "impact"),
+                     ("nav.how", "how"), ("nav.blog", "blog")])
+    co_links = [("nav.farmers", "farmers"), ("nav.careers", "careers"), ("nav.contact", "contact")]
     company = "".join(f'<li><a href="{u(route(h))}" {A(k)}>{T(k)}</a></li>' for k, h in co_links)
     socials = "".join(
         f'<a href="{s["url"]}" rel="noopener" aria-label="{s["name"]}" target="_blank">{icon(SOCIAL_ICON.get(s["icon"], "globe"))}</a>'
@@ -412,6 +441,10 @@ def footer(u):
           <li><a href="{u(route("shop"))}" {A("shop.all")}>{T("shop.all")}</a></li>
           <li><a href="{u(route("shop"))}" {A("con.gifting")}>{T("con.gifting")}</a></li>
         </ul>
+      </div>
+      <div>
+        <h4 {A("footer.about")}>{T("footer.about")}</h4>
+        <ul class="footer__list">{about}</ul>
       </div>
       <div>
         <h4 {A("footer.company")}>{T("footer.company")}</h4>

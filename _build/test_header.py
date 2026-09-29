@@ -59,8 +59,16 @@ def main():
               abs(phone_icon["width"] - phone_icon["height"]) < 1)
 
         print("\n[2] Navigation markup & clickability")
-        links = page.locator(".nav__list a.nav__link")
-        check("9 nav items rendered", links.count() == 9, f"{links.count()} found")
+        links = page.locator(".nav__list > .nav__item > a.nav__link")
+        check("5 top-level nav links rendered", links.count() == 5, f"{links.count()} found")
+        groups = page.locator(".nav__list [data-nav-menu-btn]")
+        check("one nav group (About) rendered", groups.count() == 1, f"{groups.count()} found")
+        check("the group trigger is a <button>, not a link",
+              page.evaluate("document.querySelector('[data-nav-menu-btn]').tagName") == "BUTTON")
+        check("the group trigger opens a menu it names",
+              page.evaluate("""(() => { const b = document.querySelector('[data-nav-menu-btn]');
+                const m = document.getElementById(b.getAttribute('aria-controls'));
+                return !!m && m.getAttribute('data-nav-menu') !== null; })()"""))
         hrefs = [links.nth(i).get_attribute("href") for i in range(links.count())]
         check("every nav item has a non-empty href", all(h not in (None, "") for h in hrefs), str(hrefs))
         check("no javascript: / # placeholder links", not any((h or "").startswith(("#", "javascript:")) for h in hrefs))
@@ -68,6 +76,15 @@ def main():
               all(not h.endswith(".html") or h == "" for h in hrefs), str(set(h[1:] for h in hrefs if h)))
         check("logo is a link to home", page.locator(".brand").get_attribute("href") in ("./", "", "../"),
               repr(page.locator(".brand").get_attribute("href")))
+        sub = page.locator(".nav__menu a.nav__sublink")
+        check("the group holds the four sub-links", sub.count() == 4, f"{sub.count()} found")
+        sub_hrefs = [sub.nth(i).get_attribute("href") for i in range(sub.count())]
+        check("every sub-link is a real link",
+              all(h not in (None, "") and not h.startswith(("#", "javascript:")) for h in sub_hrefs),
+              str(sub_hrefs))
+        check("sub-links point at the four pages",
+              [h.rstrip("/").split("/")[-1] for h in sub_hrefs] == ["our-story", "our-impact", "how-it-works", "blog"],
+              str(sub_hrefs))
 
         print("\n[3] Phone number is a tel: link")
         tel = page.locator(".topbar__phone")
@@ -123,7 +140,9 @@ def main():
         print("\n[5] Active state follows the current page")
         for label, path in ROUTES:
             page.goto(BASE + path, wait_until="domcontentloaded")
-            cur = page.locator('.nav__link[aria-current="page"]')
+            # an active page may be a top-level link or one of the group's
+            # children, in which case the trigger is flagged with data-current
+            cur = page.locator('.nav__link[aria-current="page"], .nav__sublink[aria-current="page"]')
             n = cur.count()
             got = cur.first.inner_text().strip() if n else "(none)"
             ok = n == 1 and got == label
@@ -131,10 +150,104 @@ def main():
                 mismatches.append(f"{path}: expected '{label}', found {n} active ({got})")
             check(f"{label:13s} -> {path:16s} active", ok, "" if ok else f"got {n}: {got}")
 
+        print("\n[5b] The About group behaves like a menu")
+        page.goto(BASE + "/", wait_until="networkidle")
+        gbtn = page.locator("[data-nav-menu-btn]")
+        gmenu = page.locator("[data-nav-menu]")
+        check("group starts closed",
+              gbtn.get_attribute("aria-expanded") == "false" and not gmenu.is_visible())
+        gbtn.hover()
+        time.sleep(0.35)
+        check("hover opens it on a pointer device",
+              gbtn.get_attribute("aria-expanded") == "true" and gmenu.is_visible())
+        page.mouse.move(20, 400)          # leave the group
+        time.sleep(0.4)
+        check("leaving with the mouse closes it again", not gmenu.is_visible())
+        gbtn.click()
+        time.sleep(0.3)
+        check("click opens it too", gmenu.is_visible())
+        page.mouse.click(720, 600)        # click far away
+        time.sleep(0.3)
+        check("a click outside closes it", not gmenu.is_visible(),
+              "still open" if gmenu.is_visible() else "")
+        gbtn.click()
+        time.sleep(0.3)
+        page.keyboard.press("Escape")
+        time.sleep(0.3)
+        check("Escape closes it and returns focus to the trigger",
+              not gmenu.is_visible() and page.evaluate(
+                  "document.activeElement.hasAttribute('data-nav-menu-btn')"))
+        page.keyboard.press("ArrowDown")
+        time.sleep(0.35)
+        check("ArrowDown opens it and moves into the links",
+              gmenu.is_visible() and page.evaluate(
+                  "document.activeElement.classList.contains('nav__sublink')"),
+              page.evaluate("document.activeElement.textContent").strip()[:24])
+        # Tab out of the group should not leave a panel stranded
+        for _ in range(5):
+            page.keyboard.press("Tab")
+            if not gmenu.is_visible():
+                break
+        check("tabbing out of the group closes it", not gmenu.is_visible())
+        check("the four sub-links are the expected pages",
+              [t.strip() for t in page.eval_on_selector_all(
+                  ".nav__menu a.nav__sublink", "e=>e.map(x=>x.textContent)")]
+              == ["Our Story", "Our Impact", "How It Works", "Blog"])
+
+        print("\n[5c] The About group works in the mobile drawer")
+        mnav = browser.new_context(viewport={"width": 390, "height": 844}, is_mobile=True,
+                                   has_touch=True, device_scale_factor=3).new_page()
+        mnav.goto(BASE + "/", wait_until="networkidle")
+        mnav.click("[data-nav-open]")
+        time.sleep(0.45)
+        msub = mnav.locator(".nav__list a.nav__sublink")
+        check("drawer lists 6 top-level items",
+              mnav.locator("#nav .nav__list > .nav__item").count() == 6,
+              str(mnav.locator("#nav .nav__list > .nav__item").count()))
+        check("the drawer's group starts collapsed",
+              mnav.eval_on_selector_all("[data-nav-menu] a", "e=>e.filter(x=>x.offsetParent!==null).length") == 0)
+        check("the drawer trigger reports collapsed",
+              mnav.locator("[data-nav-menu-btn]").get_attribute("aria-expanded") == "false")
+        mnav.locator("[data-nav-menu-btn]").click()
+        time.sleep(0.4)
+        check("tapping About expands the four links",
+              mnav.eval_on_selector_all("[data-nav-menu] a", "e=>e.filter(x=>x.offsetParent!==null).length") == 4)
+        check("the expanded group stays inside the drawer (no overflow)",
+              mnav.evaluate("document.documentElement.scrollWidth - innerWidth") <= 1)
+        check("drawer sub-link targets are 44px tall (touch)",
+              all(h >= 44 for h in mnav.eval_on_selector_all(
+                  ".nav__list a.nav__sublink", "e=>e.map(x=>x.getBoundingClientRect().height)")))
+        mnav.locator('.nav__list a.nav__sublink:has-text("Blog")').click()
+        mnav.wait_for_load_state("domcontentloaded")
+        check("a drawer sub-link navigates", "/blog/" in mnav.url, mnav.url.replace(BASE, ""))
+        mnav.close()
+
+        print("\n[5d] The four pages are also in the footer")
+        page.goto(BASE + "/", wait_until="networkidle")
+        fcols = page.eval_on_selector_all(".footer__grid h4", "e=>e.map(x=>x.textContent.trim())")
+        check("the footer has an About Us column", "About Us" in fcols, str(fcols))
+        idx = page.evaluate("""() => [...document.querySelectorAll('.footer__grid > div')]
+            .findIndex(d => { const h = d.querySelector('h4'); return h && h.textContent.trim() === 'About Us'; })""")
+        check("the About Us column exists", idx >= 0, f"index {idx}")
+        col = page.locator(".footer__grid > div").nth(idx)
+        names = [t.strip() for t in col.locator("a").all_inner_texts()]
+        check("the column links the same four pages",
+              names == ["Our Story", "Our Impact", "How It Works", "Blog"], str(names))
+        hrefs = [col.locator("a").nth(i).get_attribute("href") for i in range(col.locator("a").count())]
+        check("footer links resolve to the same routes as the dropdown",
+              [h.rstrip("/").split("/")[-1] for h in hrefs]
+              == ["our-story", "our-impact", "how-it-works", "blog"], str(hrefs))
+
         print("\n[6] Every nav link actually navigates")
         page.goto(BASE + "/", wait_until="domcontentloaded")
         for label, path in [r for r in ROUTES if r[0] != "Home"]:
-            page.click(f'.nav__list a.nav__link:has-text("{label}")')
+            if page.locator(f'.nav__list a.nav__sublink:has-text("{label}")').count():
+                # inside the group: open it, then click the link
+                page.locator("[data-nav-menu-btn]").click()
+                time.sleep(0.25)
+                page.click(f'.nav__list a.nav__sublink:has-text("{label}")')
+            else:
+                page.click(f'.nav__list a.nav__link:has-text("{label}")')
             page.wait_for_load_state("domcontentloaded")
             url = page.url.replace(BASE, "") or "/"
             check(f"click '{label}' lands on {path}", url.rstrip("/") == path.rstrip("/") or url == path, url)
@@ -227,7 +340,9 @@ def main():
         time.sleep(0.5)
         check("drawer opens", m.locator(".nav__list").is_visible())
         check("hamburger aria-expanded=true", burger.get_attribute("aria-expanded") == "true")
-        check("drawer lists all 9 links", m.locator(".nav__list a.nav__link").count() == 9)
+        check("drawer lists the 5 links plus the group trigger",
+              m.locator("#nav .nav__list > .nav__item").count() == 6,
+              str(m.locator("#nav .nav__list > .nav__item").count()))
         check("drawer offers Appearance with both modes",
               m.locator(".nav__theme").is_visible() and m.locator("[data-theme-set]").count() == 2)
         check("drawer marks the current mode",
@@ -273,14 +388,19 @@ def main():
         # navigate on mobile
         burger.click()
         time.sleep(0.45)
-        m.click('.nav__list a.nav__link:has-text("Our Impact")')
+        m.locator("[data-nav-menu-btn]").click()
+        time.sleep(0.35)
+        m.click('.nav__list a.nav__sublink:has-text("Our Impact")')
         m.wait_for_load_state("domcontentloaded")
         check("mobile link navigates", "/our-impact/" in m.url, m.url.replace(BASE, ""))
         # text_content() not inner_text(): the closed drawer is visibility:hidden,
         # and innerText returns "" for non-rendered content in Chromium.
+        cur_sub = m.locator('.nav__sublink[aria-current="page"]').first
         check("active state on mobile page",
-              (m.locator('.nav__link[aria-current="page"]').first.text_content() or "").strip() == "Our Impact",
-              repr((m.locator('.nav__link[aria-current="page"]').first.text_content() or "").strip()))
+              (cur_sub.text_content() or "").strip() == "Our Impact",
+              repr((cur_sub.text_content() or "").strip()))
+        check("the group is flagged as holding the current page",
+              m.locator("[data-nav-menu-btn]").get_attribute("data-current") == "true")
         check("no mobile console errors", not m_errors, "; ".join(m_errors[:2]))
         check("no mobile overflow after navigation",
               m.evaluate("document.documentElement.scrollWidth - document.documentElement.clientWidth") <= 1)
@@ -326,8 +446,12 @@ def main():
 
         print("\n[11] Header works after in-page navigation")
         page.goto(BASE + "/shop/", wait_until="domcontentloaded")
-        page.click('.nav__list a.nav__link:has-text("Blog")')
+        page.locator("[data-nav-menu-btn]").click()
+        time.sleep(0.3)
+        page.click('.nav__list a.nav__sublink:has-text("Blog")')
         page.wait_for_load_state("domcontentloaded")
+        check("clicking a sub-link from another page lands on /blog/", "/blog/" in page.url,
+              page.url.replace(BASE, ""))
         page.click('.nav__list a.nav__link:has-text("Home")')
         page.wait_for_load_state("domcontentloaded")
         check("Home clickable and returns to /", page.url.rstrip("/") == BASE.rstrip("/"), page.url)

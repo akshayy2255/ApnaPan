@@ -42,6 +42,83 @@
   var COD_FEE = CFG.codFee || 25;
   var SCHOOL_PCT = CFG.schoolPct || 6;
 
+  /* ---------------------------------------------------------- nav group
+     The "About" group. Desktop: opens on hover and on click. Drawer: opens on
+     click only (there is no hover on a touch screen). Keyboard: Enter/Space to
+     open, ArrowDown/Up to walk the links, Escape to close and return focus,
+     Tab out to close. One listener serves both presentations because the button
+     names the menu it controls. */
+  function navGroupButtons() { return $$('[data-nav-menu-btn]'); }
+  function menuFor(btn) {
+    var id = btn.getAttribute('aria-controls');
+    return id ? document.getElementById(id) : null;
+  }
+  function setGroup(btn, open) {
+    var menu = menuFor(btn);
+    if (!menu) return;
+    menu.setAttribute('data-open', open ? 'true' : 'false');
+    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+  function closeGroups(except) {
+    navGroupButtons().forEach(function (b) { if (b !== except) setGroup(b, false); });
+  }
+  function groupOf(menu) {
+    return navGroupButtons().filter(function (b) { return menuFor(b) === menu; })[0] || null;
+  }
+
+  /* true only where the hover listeners below were installed */
+  var canHover = !!(window.matchMedia && matchMedia('(hover:hover) and (pointer:fine)').matches);
+
+  navGroupButtons().forEach(function (btn) {
+    btn.addEventListener('click', function (e) {
+      e.preventDefault();
+      var box = btn.closest('.nav__item--group') || btn;
+      var open = btn.getAttribute('aria-expanded') === 'true';
+      // Hover already opened it and the pointer is still inside: a click here
+      // would snap it shut under the user's cursor, so leave it be.
+      if (open && canHover && box.matches(':hover')) return;
+      closeGroups(btn);
+      setGroup(btn, !open);
+    });
+    btn.addEventListener('keydown', function (e) {
+      if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+      e.preventDefault();
+      setGroup(btn, true);
+      var links = $$('a', menuFor(btn));
+      if (links.length) links[e.key === 'ArrowDown' ? 0 : links.length - 1].focus();
+    });
+  });
+
+  /* hover — only where a pointer can actually hover */
+  if (canHover) {
+    navGroupButtons().forEach(function (btn) {
+      var box = btn.closest('.nav__item--group') || btn;
+      var timer;
+      box.addEventListener('mouseenter', function () {
+        clearTimeout(timer);
+        closeGroups(btn);
+        setGroup(btn, true);
+      });
+      box.addEventListener('mouseleave', function () {
+        clearTimeout(timer);
+        timer = setTimeout(function () { setGroup(btn, false); }, 120);
+      });
+    });
+  }
+
+  /* any click outside a group closes every open group */
+  document.addEventListener('click', function (e) {
+    if (e.target.closest('[data-nav-menu-btn]') || e.target.closest('[data-nav-menu]')) return;
+    closeGroups(null);
+  });
+  /* focus leaving the group closes it, so Tab does not leave a panel stranded */
+  document.addEventListener('focusin', function (e) {
+    navGroupButtons().forEach(function (btn) {
+      var box = btn.closest('.nav__item--group');
+      if (box && !box.contains(e.target)) setGroup(btn, false);
+    });
+  });
+
   /* ------------------------------------------------------------- helpers */
   function $(s, r) { return (r || document).querySelector(s); }
   /* Build a site-relative URL that works at a domain root AND inside a
@@ -332,9 +409,12 @@
   document.addEventListener('keydown', function (e) {
     if (e.key !== 'Escape' && e.key !== 'Esc') return;
     var wasOpen = langIsOpen();
+    var openGroup = navGroupButtons().filter(function (b) { return b.getAttribute('aria-expanded') === 'true'; })[0];
     openLang(false);
     setNav(false);
     closeDrawer();
+    closeGroups(null);
+    if (openGroup) { openGroup.focus(); return; }
     if (wasOpen && langBtn) langBtn.focus();
   });
 

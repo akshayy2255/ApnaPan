@@ -75,15 +75,23 @@ document.documentElement.setAttribute("data-theme",t);})();</script>
         <button class="icon-btn nav__close" type="button" data-nav-close aria-label="Close menu" aria-expanded="false"><svg class="" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
       </div>
       <ul class="nav__list">
-        <li><a class="nav__link" href="../../" data-i18n="nav.home">Home</a></li>
-        <li><a class="nav__link" href="../../our-story/" data-i18n="nav.story">Our Story</a></li>
-        <li><a class="nav__link" href="../../our-impact/" data-i18n="nav.impact">Our Impact</a></li>
-        <li><a class="nav__link" href="../../shop/" data-i18n="nav.shop">Shop</a></li>
-        <li><a class="nav__link" href="../../how-it-works/" data-i18n="nav.how">How It Works</a></li>
-        <li><a class="nav__link" href="../../for-farmers/" data-i18n="nav.farmers">For Farmers</a></li>
-        <li><a class="nav__link" href="../../careers/" data-i18n="nav.careers">Careers</a></li>
-        <li><a class="nav__link" href="../../blog/" aria-current="page" data-i18n="nav.blog">Blog</a></li>
-        <li><a class="nav__link" href="../../contact/" data-i18n="nav.contact">Contact</a></li>
+        <li class="nav__item"><a class="nav__link" href="../../" data-i18n="nav.home">Home</a></li>
+        <li class="nav__item"><a class="nav__link" href="../../shop/" data-i18n="nav.shop">Shop</a></li>
+        <li class="nav__item nav__item--group" data-nav-group="about">
+          <button class="nav__link nav__link--btn" type="button" data-nav-menu-btn
+                  aria-expanded="false" aria-controls="aboutMenu" data-current="true">
+            <span data-i18n="nav.about">About</span><svg class="nav__caret" style="width:14px;height:14px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <ul class="nav__menu" id="aboutMenu" data-nav-menu="about" aria-label="About">
+            <li><a class="nav__sublink" href="../../our-story/" data-i18n="nav.story">Our Story</a></li>
+            <li><a class="nav__sublink" href="../../our-impact/" data-i18n="nav.impact">Our Impact</a></li>
+            <li><a class="nav__sublink" href="../../how-it-works/" data-i18n="nav.how">How It Works</a></li>
+            <li><a class="nav__sublink" href="../../blog/" aria-current="page" data-i18n="nav.blog">Blog</a></li>
+          </ul>
+        </li>
+        <li class="nav__item"><a class="nav__link" href="../../for-farmers/" data-i18n="nav.farmers">For Farmers</a></li>
+        <li class="nav__item"><a class="nav__link" href="../../careers/" data-i18n="nav.careers">Careers</a></li>
+        <li class="nav__item"><a class="nav__link" href="../../contact/" data-i18n="nav.contact">Contact</a></li>
       </ul>
       <div class="nav__lang">
         <span class="nav__lang-title"><svg class="" style="width:15px;height:15px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.6 3.9 5.6 3.9 9s-1.3 6.4-3.9 9c-2.6-2.6-3.9-5.6-3.9-9S9.4 5.6 12 3z"/></svg> <span data-i18n="nav.language">Language</span></span>
@@ -248,8 +256,12 @@ document.documentElement.setAttribute("data-theme",t);})();</script>
         </ul>
       </div>
       <div>
+        <h4 data-i18n="footer.about">About Us</h4>
+        <ul class="footer__list"><li><a href="../../our-story/" data-i18n="nav.story">Our Story</a></li><li><a href="../../our-impact/" data-i18n="nav.impact">Our Impact</a></li><li><a href="../../how-it-works/" data-i18n="nav.how">How It Works</a></li><li><a href="../../blog/" data-i18n="nav.blog">Blog</a></li></ul>
+      </div>
+      <div>
         <h4 data-i18n="footer.company">Company</h4>
-        <ul class="footer__list"><li><a href="../../our-story/" data-i18n="nav.story">Our Story</a></li><li><a href="../../our-impact/" data-i18n="nav.impact">Our Impact</a></li><li><a href="../../how-it-works/" data-i18n="nav.how">How It Works</a></li><li><a href="../../blog/" data-i18n="nav.blog">Blog</a></li><li><a href="../../careers/" data-i18n="nav.careers">Careers</a></li><li><a href="../../for-farmers/" data-i18n="nav.farmers">For Farmers</a></li></ul>
+        <ul class="footer__list"><li><a href="../../for-farmers/" data-i18n="nav.farmers">For Farmers</a></li><li><a href="../../careers/" data-i18n="nav.careers">Careers</a></li><li><a href="../../contact/" data-i18n="nav.contact">Contact</a></li></ul>
       </div>
       <div>
         <h4 data-i18n="footer.support">Help &amp; contact</h4>

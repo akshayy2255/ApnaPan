@@ -48,15 +48,20 @@ BRAND = {
 # Every navigation entry is a real route. ROUTES (see render.py) resolves these to
 # clean URLs such as /shop/ and /our-story/, served from a folder index.html.
 # Nothing here is decorative and nothing points at a page that does not exist.
+# Main navigation. An entry with "children" renders as a dropdown on desktop and
+# as a disclosure group in the mobile drawer; each child keeps its own route,
+# translation key and active state.
 NAV = [
     {"key": "nav.home", "route": "home"},
-    {"key": "nav.story", "route": "story"},
-    {"key": "nav.impact", "route": "impact"},
     {"key": "nav.shop", "route": "shop"},
-    {"key": "nav.how", "route": "how"},
+    {"key": "nav.about", "children": [
+        {"key": "nav.story", "route": "story"},
+        {"key": "nav.impact", "route": "impact"},
+        {"key": "nav.how", "route": "how"},
+        {"key": "nav.blog", "route": "blog"},
+    ]},
     {"key": "nav.farmers", "route": "farmers"},
     {"key": "nav.careers", "route": "careers"},
-    {"key": "nav.blog", "route": "blog"},
     {"key": "nav.contact", "route": "contact"},
 ]
 

@@ -40,8 +40,16 @@ with sync_playwright() as pw:
         ck(f"{path} console clean", not errs, "; ".join(errs[:1]))
         ow = p.evaluate("document.documentElement.scrollWidth - document.documentElement.clientWidth")
         ck(f"{path} desktop overflow", ow <= 1, f"{ow}px")
-        ck(f"{path} has header nav", p.locator(".nav__list a.nav__link").count() == 9,
-           str(p.locator(".nav__list a.nav__link").count()))
+        # 5 top-level links + the About group trigger; the four pages behind
+        # the group are asserted separately below
+        ck(f"{path} has header nav", p.locator(".nav__list > .nav__item").count() == 6,
+           str(p.locator(".nav__list > .nav__item").count()))
+        ck(f"{path} has the About group's 4 links",
+           p.locator(".nav__list a.nav__sublink").count() == 4,
+           str(p.locator(".nav__list a.nav__sublink").count()))
+        ck(f"{path} footer links all four About pages",
+           all(p.locator(f'.footer__list a[href*="{slug}"]').count() >= 1 for slug in
+               ("our-story", "our-impact", "how-it-works", "blog")))
         ck(f"{path} has basket button", p.locator("[data-cart-open]").count() == 1)
     print(f"  -> {len(PAGES)} pages checked")
 
@@ -125,7 +133,11 @@ with sync_playwright() as pw:
         kn = p.locator('[data-i18n="common.freeship"]').first.text_content()
         has_kn = any("\u0c80" <= ch <= "\u0cff" for ch in (kn or ""))
         ck(f"{path} switches to Kannada", has_kn, repr((kn or "")[:20]))
-        nav_ok = p.locator('.nav__list a.nav__link[href]').count() == 9
+        # after switching language: 5 links + the group trigger keep their hrefs
+        # and the group still opens onto its four links
+        nav_ok = (p.locator('.nav__list > .nav__item > a.nav__link[href]').count() == 5
+                  and p.locator('.nav__list [data-nav-menu-btn]').count() == 1
+                  and p.locator('.nav__list a.nav__sublink[href]').count() == 4)
         ck(f"{path} nav intact after language switch", nav_ok)
         p.evaluate("window.APNAPAN_setLang('en')")
     b.close()

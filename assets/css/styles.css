@@ -619,7 +619,8 @@ hr{border:0;border-top:1px solid var(--line);margin:2.2rem 0}
 .site-footer h4{color:var(--cream);font-size:1.02rem;letter-spacing:.04em;margin-bottom:.9rem}
 .site-footer a{color:#cbbdae;text-decoration:none}
 .site-footer a:hover{color:var(--mustard);text-decoration:underline}
-.footer__grid{display:grid;gap:clamp(1.5rem,3.4vw,2.6rem);grid-template-columns:1.5fr 1fr 1fr 1.2fr}
+.footer__grid{display:grid;gap:clamp(1.5rem,3.4vw,2.6rem);grid-template-columns:1.6fr 1fr 1fr 1fr 1.2fr}
+@media(max-width:1100px){.footer__grid{grid-template-columns:1.4fr 1fr 1fr;gap:clamp(1.4rem,3vw,2rem)}}
 @media(max-width:900px){.footer__grid{grid-template-columns:1fr 1fr}}
 @media(max-width:560px){.footer__grid{grid-template-columns:1fr}}
 .footer__list{list-style:none;padding:0;margin:0;display:grid;gap:.55rem;font-size:.92rem}
@@ -1153,3 +1154,66 @@ html[data-theme="dark"] .theme-btn .ic-sun{display:block}
 @media(max-width:1100px){
   .nav__theme{display:block;margin-top:1.1rem;padding-top:1.1rem;border-top:1px solid var(--line)}
 }
+
+/* ============================================================================
+   NAV GROUP — "About" and its four children
+   ----------------------------------------------------------------------------
+   One markup, two presentations, exactly like the nav itself: a dropdown panel
+   in the desktop header, an inline disclosure list inside the mobile drawer.
+   The group is <button> + <ul>; every destination in it is a real <a>.
+   ========================================================================= */
+.nav__item--group{position:relative}
+.nav__link--btn{
+  /* a button, but it must sit in the row exactly like the <a> links beside it */
+  font:inherit;background:none;border:0;cursor:pointer;appearance:none;
+}
+.nav__caret{width:14px;height:14px;transition:transform var(--dur) var(--ease);opacity:.7}
+.nav__item--group [data-nav-menu-btn][aria-expanded="true"] .nav__caret{transform:rotate(180deg)}
+/* the group reads as current when one of its four pages is the page you are on */
+.nav__link--btn[data-current="true"]{color:var(--terracotta-dark);font-weight:600}
+.nav__link--btn[data-current="true"]::after{left:.62rem;right:.62rem;opacity:.45}
+
+.nav__menu{
+  position:absolute;left:0;top:calc(100% + .45rem);min-width:224px;
+  background:var(--white);border:1px solid var(--line);border-radius:var(--r-md);
+  box-shadow:var(--shadow-lg);padding:.35rem;list-style:none;margin:0;display:none;z-index:150
+}
+.nav__menu[data-open="true"]{display:block;animation:navMenuIn .16s var(--ease)}
+@keyframes navMenuIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+/* the first/last item widen the hit area slightly, so the panel is not a
+   keyboard-only or pointer-only affordance */
+.nav__sublink{
+  display:flex;align-items:center;min-height:42px;padding:.5rem .7rem;border-radius:var(--r-sm);
+  color:var(--ink-soft);text-decoration:none;font-size:.93rem;font-weight:500;white-space:nowrap;
+  transition:background var(--dur) var(--ease),color var(--dur) var(--ease)
+}
+.nav__sublink:hover{background:var(--clay-soft);color:var(--terracotta-dark)}
+.nav__sublink:focus-visible{outline:3px solid var(--terracotta);outline-offset:-2px}
+.nav__sublink[aria-current="page"]{background:#fbe7dc;color:var(--terracotta-dark);font-weight:600}
+/* a hairline between the group trigger's underline and the panel */
+.nav__menu::before{content:"";position:absolute;left:.6rem;right:.6rem;top:.35rem;height:0}
+
+/* --- inside the drawer the same <ul> becomes an inline list ----------------- */
+@media(max-width:1100px){
+  .nav__menu{
+    position:static;min-width:0;margin:.15rem 0 .3rem;padding:0 0 0 .6rem;
+    border:0;border-left:2px solid var(--line);border-radius:0;box-shadow:none;
+    background:none;animation:none;overflow:hidden
+  }
+  .nav__menu[data-open="true"]{display:block}
+  .nav__sublink{min-height:44px;padding:.55rem .7rem;font-size:.98rem;white-space:normal}
+  .nav__link--btn{width:100%;justify-content:space-between}
+  .nav__link--btn[data-current="true"]{background:var(--clay-soft)}
+}
+@media(max-width:1100px){
+  /* the drawer list stacks, so the trigger spans the row like the links do */
+  .nav__item--group{display:block}
+}
+@media(prefers-reduced-motion:reduce){
+  .nav__menu[data-open="true"]{animation:none}
+}
+@media print{.nav__menu{display:none!important}}
+
+/* The dark theme patches the hardcoded warm tints by selector; the group's
+   active sub-link is one of them, so it is listed here too. */
+html[data-theme="dark"] .nav__sublink[aria-current="page"]{background:#3a2318;color:var(--terracotta-dark)}

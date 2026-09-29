@@ -101,13 +101,15 @@ apnapan/
 │   ├── fonts/*.woff2          7 files, 404 KB total
 │   ├── js/app.js              Cart, filters, tabs, counters, forms, checkout, nav/drawer/dropdown
 │   ├── js/i18n.js             Language switcher (writes <html data-lang-active>)
-│   ├── js/i18n-data.js        Generated translations (312 strings × 3 languages)
+│   ├── js/i18n-data.js        Generated translations (320 strings × 3 languages)
 │   ├── js/data.js             Generated product catalogue + store config
 │   └── images/                16 images (hero, farm, factory, lab, children, 8 packshots)
 └── _build/                    The generator — edit content here, then rebuild
     ├── content.py             ← ALL products, people, numbers, jobs, posts, FAQs
     ├── i18n.py                ← ALL interface strings (en / kn / hi)
     ├── render.py              Routes, URLs, icons, page chrome, shared components (incl. the header)
+    │                          NAV lives in content.py: an entry with "children" becomes a
+    │                          dropdown group in the header and a disclosure list in the drawer
     ├── pages.py               The eleven page templates
     ├── build.py               Run this to regenerate the site
     └── test_header.py / test_site.py   Browser test suites (see "Testing" below)
@@ -128,8 +130,8 @@ every nav/footer/sitemap reference follows.
 ```bash
 python3 -m pip install playwright && python3 -m playwright install chromium
 cd apnapan && python3 serve.py 8000 --no-open &     # any static server works
-python3 _build/test_header.py     #  94 checks — header, nav, dropdown, drawer, keyboard, a11y, theme
-python3 _build/test_site.py       # 168 checks — all 24 pages, links, cart, checkout, languages
+python3 _build/test_header.py     # 122 checks — header, nav, About group, drawer, keyboard, a11y, theme
+python3 _build/test_site.py       # 216 checks — all 24 pages, links, cart, checkout, languages
 python3 _build/audit_contrast.py  # WCAG contrast of every text element, both themes
 ```
 
@@ -159,7 +161,29 @@ It rewrites every HTML page, `sitemap.xml`, `robots.txt`, `assets/js/data.js` an
 | Contact details, addresses, social links, FSSAI/GST numbers | `_build/content.py` → `BRAND` |
 | Any interface text (in all three languages) | `_build/i18n.py` → `STR` / `EXTRA_STR` |
 | Free-shipping threshold, COD fee, school-fund %, Razorpay key | `_build/build.py` → `js_data()` |
+| The top navigation (order, labels, grouping, footer column) | `_build/content.py` → `NAV` |
 | Colours, spacing, typography | `assets/css/styles.css` → `:root` tokens at the top |
+
+### The navigation
+
+`NAV` in `_build/content.py` is the single source of truth for the header **and** the footer
+list. A plain entry is a link; an entry with `"children"` becomes a group:
+
+```python
+{"key": "nav.about", "children": [
+    {"key": "nav.story",  "route": "story"},
+    {"key": "nav.impact", "route": "impact"},
+    {"key": "nav.how",    "route": "how"},
+    {"key": "nav.blog",   "route": "blog"},
+]},
+```
+
+The same markup adapts to the device: in the desktop header it is an **"About ▾" dropdown**
+(opening on hover, on click, and on Enter/Space, with Arrow keys, Escape and Tab handled);
+in the mobile drawer it is a **collapsible list**, because there is no hover on a touch
+screen. The four pages are also linked in the footer's **About Us** column, so they are
+reachable without the dropdown. Renaming or adding a group means adding one entry to `NAV`
+plus its label in `_build/i18n.py` — no template or CSS changes.
 
 ---
 
