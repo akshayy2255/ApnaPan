@@ -11,12 +11,22 @@ dropdown, mobile hamburger, overflow and console errors.
 
 Exits non-zero if anything fails.
 """
+import os
 import sys
 import time
 
 from playwright.sync_api import sync_playwright
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import content as C                                    # noqa: E402  the nav, verbatim
+
 BASE = sys.argv[1] if len(sys.argv) > 1 else "http://127.0.0.1:8000"
+
+# Taken from the site's own navigation, so adding or moving a header item does
+# not need three magic numbers changed here.
+NAV_ITEMS = len(C.NAV)
+NAV_LINKS = sum(1 for n in C.NAV if not n.get("children"))
+NAV_LABELS = [n["key"].split(".")[-1].capitalize() for n in C.NAV]
 
 ROUTES = [
     ("Home", "/"), ("Our Story", "/our-story/"), ("Our Impact", "/our-impact/"),
@@ -60,7 +70,8 @@ def main():
 
         print("\n[2] Navigation markup & clickability")
         links = page.locator(".nav__list > .nav__item > a.nav__link")
-        check("5 top-level nav links rendered", links.count() == 5, f"{links.count()} found")
+        check(f"all {NAV_LINKS} plain top-level nav links rendered",
+              links.count() == NAV_LINKS, f"{links.count()} found")
         groups = page.locator(".nav__list [data-nav-menu-btn]")
         check("one nav group (About) rendered", groups.count() == 1, f"{groups.count()} found")
         check("the group trigger is a <button>, not a link",
@@ -201,8 +212,8 @@ def main():
         mnav.click("[data-nav-open]")
         time.sleep(0.45)
         msub = mnav.locator(".nav__list a.nav__sublink")
-        check("drawer lists 6 top-level items",
-              mnav.locator("#nav .nav__list > .nav__item").count() == 6,
+        check(f"drawer lists all {NAV_ITEMS} top-level items",
+              mnav.locator("#nav .nav__list > .nav__item").count() == NAV_ITEMS,
               str(mnav.locator("#nav .nav__list > .nav__item").count()))
         check("the drawer's group starts collapsed",
               mnav.eval_on_selector_all("[data-nav-menu] a", "e=>e.filter(x=>x.offsetParent!==null).length") == 0)
@@ -340,8 +351,8 @@ def main():
         time.sleep(0.5)
         check("drawer opens", m.locator(".nav__list").is_visible())
         check("hamburger aria-expanded=true", burger.get_attribute("aria-expanded") == "true")
-        check("drawer lists the 5 links plus the group trigger",
-              m.locator("#nav .nav__list > .nav__item").count() == 6,
+        check(f"drawer lists the {NAV_LINKS} links plus the group trigger",
+              m.locator("#nav .nav__list > .nav__item").count() == NAV_ITEMS,
               str(m.locator("#nav .nav__list > .nav__item").count()))
         check("drawer offers Appearance with both modes",
               m.locator(".nav__theme").is_visible() and m.locator("[data-theme-set]").count() == 2)

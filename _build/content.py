@@ -54,6 +54,9 @@ BRAND = {
 NAV = [
     {"key": "nav.home", "route": "home"},
     {"key": "nav.shop", "route": "shop"},
+    # The scheme finder is free and most of the women who need ApnaPan come for
+    # it, so it sits in the header next to the shop — not only in the footer.
+    {"key": "nav.schemes", "route": "schemes"},
     {"key": "nav.about", "children": [
         {"key": "nav.story", "route": "story"},
         {"key": "nav.impact", "route": "impact"},

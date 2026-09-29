@@ -175,6 +175,10 @@ It rewrites every HTML page, `sitemap.xml`, `robots.txt`, `assets/js/data.js` an
 
 ### The navigation
 
+The header today is **Home · Shop · Government Schemes · About ▾ · For Farmers · Careers ·
+Contact** (the scheme finder sits next to the shop, because it is free and it is what many
+of the women who need ApnaPan come for). It is also in the footer's **Company** column.
+
 `NAV` in `_build/content.py` is the single source of truth for the header **and** the footer
 list. A plain entry is a link; an entry with `"children"` becomes a group:
 
@@ -191,8 +195,9 @@ The same markup adapts to the device: in the desktop header it is an **"About �
 (opening on hover, on click, and on Enter/Space, with Arrow keys, Escape and Tab handled);
 in the mobile drawer it is a **collapsible list**, because there is no hover on a touch
 screen. The four pages are also linked in the footer's **About Us** column, so they are
-reachable without the dropdown. Renaming or adding a group means adding one entry to `NAV`
-plus its label in `_build/i18n.py` — no template or CSS changes.
+reachable without the dropdown. Renaming or adding an entry means adding one line to `NAV`
+plus its label in `_build/i18n.py` — no template or CSS changes, and the header
+and footer tests count the items from `NAV` itself, so they follow along.
 
 ---
 

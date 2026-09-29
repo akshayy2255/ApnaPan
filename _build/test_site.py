@@ -4,7 +4,13 @@ Run after any change to routing or asset paths:  python3 _build/test_site.py"""
 import sys, time, glob, os, urllib.parse
 from playwright.sync_api import sync_playwright
 
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__))))
+import content as C                                       # noqa: E402  the nav, verbatim
+
 BASE = sys.argv[1] if len(sys.argv) > 1 else "http://127.0.0.1:8000"
+NAV_ITEMS = len(C.NAV)
+NAV_LINKS = sum(1 for n in C.NAV if not n.get("children"))
+NAV_SUBLINKS = sum(len(n.get("children", [])) for n in C.NAV)
 PAGES = ["/", "/our-story/", "/our-impact/", "/shop/", "/how-it-works/", "/for-farmers/",
          "/careers/", "/blog/", "/contact/", "/checkout/", "/404.html"]
 _root = os.path.normpath(os.path.join(os.path.dirname(__file__), ".."))
@@ -42,12 +48,12 @@ with sync_playwright() as pw:
         ck(f"{path} console clean", not errs, "; ".join(errs[:1]))
         ow = p.evaluate("document.documentElement.scrollWidth - document.documentElement.clientWidth")
         ck(f"{path} desktop overflow", ow <= 1, f"{ow}px")
-        # 5 top-level links + the About group trigger; the four pages behind
-        # the group are asserted separately below
-        ck(f"{path} has header nav", p.locator(".nav__list > .nav__item").count() == 6,
+        # counted from the site's own navigation, so moving a header item does
+        # not break this test — the group's pages are asserted separately below
+        ck(f"{path} has header nav", p.locator(".nav__list > .nav__item").count() == NAV_ITEMS,
            str(p.locator(".nav__list > .nav__item").count()))
-        ck(f"{path} has the About group's 4 links",
-           p.locator(".nav__list a.nav__sublink").count() == 4,
+        ck(f"{path} has the About group's {NAV_SUBLINKS} links",
+           p.locator(".nav__list a.nav__sublink").count() == NAV_SUBLINKS,
            str(p.locator(".nav__list a.nav__sublink").count()))
         ck(f"{path} footer links all four About pages",
            all(p.locator(f'.footer__list a[href*="{slug}"]').count() >= 1 for slug in
@@ -135,11 +141,11 @@ with sync_playwright() as pw:
         kn = p.locator('[data-i18n="common.freeship"]').first.text_content()
         has_kn = any("\u0c80" <= ch <= "\u0cff" for ch in (kn or ""))
         ck(f"{path} switches to Kannada", has_kn, repr((kn or "")[:20]))
-        # after switching language: 5 links + the group trigger keep their hrefs
-        # and the group still opens onto its four links
-        nav_ok = (p.locator('.nav__list > .nav__item > a.nav__link[href]').count() == 5
+        # after switching language: every link and the group trigger keep their
+        # hrefs, and the group still opens onto its links
+        nav_ok = (p.locator('.nav__list > .nav__item > a.nav__link[href]').count() == NAV_LINKS
                   and p.locator('.nav__list [data-nav-menu-btn]').count() == 1
-                  and p.locator('.nav__list a.nav__sublink[href]').count() == 4)
+                  and p.locator('.nav__list a.nav__sublink[href]').count() == NAV_SUBLINKS)
         ck(f"{path} nav intact after language switch", nav_ok)
         p.evaluate("window.APNAPAN_setLang('en')")
     b.close()
