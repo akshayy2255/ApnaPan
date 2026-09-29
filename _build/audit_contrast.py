@@ -22,7 +22,8 @@ for a in sys.argv[1:]:
 PAGES = ["/", "/our-story/", "/our-impact/", "/shop/", "/how-it-works/",
          "/for-farmers/", "/careers/", "/blog/", "/contact/", "/checkout/",
          "/products/bisibelebath-masala/", "/products/nellikai-pickle/",
-         "/blog/byadagi-chilli-guide/"]
+         "/blog/byadagi-chilli-guide/", "/schemes/", "/schemes/mudra/",
+         "/schemes/ayushman-bharat/"]
 
 JS = r"""
 () => {

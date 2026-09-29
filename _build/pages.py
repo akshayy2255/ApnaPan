@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """ApnaPan — page builders. Every page is prerendered to static HTML."""
+import os
+
 from content import (BRAND, PRODUCTS, TESTIMONIALS, TIMELINE, IMPACT, ALLOCATION, EDUCATION,
                      FARMER_WHY, FARMER_STEPS, FARMER_FAQ, JOBS, BENEFITS, CAREER_FAQ,
                      POSTS, FAQS_HOME, FAQS_SHIPPING, TRUST_BADGES, CATEGORIES)
@@ -8,6 +10,10 @@ from render import (T, Traw, A, AP, E, icon, live_categories, mark, TYPE_KEY, SP
                     stars, rating_line, product_card, stat_card, badge_card, quote_card, faq_block,
                     check_list, newsletter_block, impact_band, trust_strip, breadcrumbs,
                     ld_org, ld_product, ld_faq, ld_breadcrumb, Urls)
+
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.dirname(HERE)
 
 
 def by_slug(slug):
@@ -1646,3 +1652,363 @@ def not_found(u):
 </section>
 </main>'''
     return head("Page not found", "Page not found", "404.html", u("assets/css/styles.css"), u) + header("", u) + body + footer(u) + "</body></html>"
+
+
+# ======================================================== GOVERNMENT SCHEMES
+# A three-screen flow for women who are not used to apps:
+#   1. four tap questions          (this page, no reload, works offline)
+#   2. one card per scheme         (/schemes/<slug>/, audio + one big action)
+#   3. "Request help applying"     (creates a task for her Sakhi Champion)
+# Matching runs in the browser from assets/js/schemes-data.js so it works with
+# no network at all. See assets/js/schemes.js.
+
+def _scheme_script(s):
+    """The spoken explainer, built from the card's own fields."""
+    parts = [s["one_line"], s["benefit_amount"], s["who_qualifies"], s["how_to_apply"]]
+    return " ".join(p.strip() for p in parts if p)
+
+
+def schemes(u):
+    import schemes as S
+
+    quiz_html = "".join(
+        f'''<li class="sch-dot" data-sch-dot="{i}"><span class="sr-only">{q["key"]}</span></li>'''
+        for i, q in enumerate(S.QUIZ))
+
+    how = "".join(f'''<li class="sch-how__item">
+        {icon(ic, "sch-how__icon", 26)}
+        <span {A(k)}>{T(k)}</span>
+      </li>''' for ic, k in [("clipboard", "sch.how.1"), ("filter", "sch.how.2"), ("women", "sch.how.3")])
+
+    body = f'''
+<main id="main" class="sch" data-sch-app data-sch-root="{u('schemes/')}"
+      data-sch-sw="{u('sw.js')}" data-sch-manifest="{u('manifest.webmanifest')}"
+      data-sch-audio-base="{u('assets/audio/')}">
+  <audio data-sch-audio preload="none" hidden></audio>
+
+  <section class="sch-hero">
+    <div class="wrap sch-hero__inner">
+      <div class="sch-hero__text">
+        <span class="eyebrow" {A("sch.eyebrow")}>{T("sch.eyebrow")}</span>
+        <h1 {A("sch.title")}>{T("sch.title")}</h1>
+        <p class="lede" {A("sch.lede")}>{T("sch.lede")}</p>
+      </div>
+      <div class="sch-hero__cta">
+        <button class="btn btn--gold btn--lg btn--block" type="button" data-sch-start>
+          {icon("search", "", 20)}<span {A("sch.start")}>{T("sch.start")}</span>
+        </button>
+        <p class="small muted mt-1" {A("sch.start.hint")}>{T("sch.start.hint")}</p>
+        <div class="sch-pills">
+          <span class="sch-pill sch-pill--on" data-sch-status aria-live="polite">
+            {icon("cloud-off", "sch-pill__ico", 15)}<span data-sch-status-text {A("sch.online")}>{T("sch.online")}</span>
+          </span>
+          <button class="sch-pill sch-pill--btn" type="button" data-sch-open-requests>
+            {icon("clipboard", "sch-pill__ico", 15)}<span {A("sch.req.title")}>{T("sch.req.title")}</span>
+            <b class="sch-pill__count" data-sch-req-count hidden>0</b>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap sch-app">
+    <!-- screen 1: the four questions -->
+    <div class="sch-screen sch-card" data-sch-screen="quiz" hidden>
+      <div class="sch-progress">
+        <button class="sch-iconbtn" type="button" data-sch-back aria-label="{T('sch.back')}">{icon("chev-r", "sch-flip", 20)}</button>
+        <span class="sch-progress__label"><span {A("sch.step")}>{T("sch.step")}</span> <b data-sch-step>1</b> / 4</span>
+        <ol class="sch-dots" data-sch-dots>{quiz_html}</ol>
+      </div>
+      <h2 class="sch-q" data-sch-question></h2>
+      <p class="sch-qhint" data-sch-qhint></p>
+      <div class="sch-options" data-sch-options role="group"></div>
+      <div class="sch-actions">
+        <button class="btn btn--gold btn--block" type="button" data-sch-next hidden>{T("sch.next")}</button>
+      </div>
+    </div>
+
+    <!-- screen 2: only the schemes that fit -->
+    <div class="sch-screen" data-sch-screen="results" hidden>
+      <div class="sch-card sch-card--head">
+        <h2 {A("sch.results.title")}>{T("sch.results.title")}</h2>
+        <p class="small muted" {A("sch.results.sub")}>{T("sch.results.sub")}</p>
+        <p class="sch-empty" data-sch-none hidden {A("sch.results.none")}>{T("sch.results.none")}</p>
+        <p class="sch-strip" data-sch-statenote hidden>{icon("info", "sch-strip__ico", 18)}
+          <span {A("sch.state.note")}>{T("sch.state.note")}</span></p>
+      </div>
+      <div class="sch-cards" data-sch-results></div>
+      <div class="sch-actions">
+        <button class="btn btn--ghost" type="button" data-sch-restart>{icon("arrow-r", "", 18)}<span {A("sch.reset")}>{T("sch.reset")}</span></button>
+      </div>
+    </div>
+
+    <!-- screen 3: her outstanding requests -->
+    <div class="sch-screen sch-card" data-sch-screen="requests" hidden>
+      <h2 {A("sch.req.title")}>{T("sch.req.title")}</h2>
+      <p class="sch-empty" data-sch-req-none {A("sch.req.empty")}>{T("sch.req.empty")}</p>
+      <div class="sch-reqs" data-sch-requests></div>
+      <div class="sch-actions">
+        <button class="btn btn--ghost" type="button" data-sch-close-requests>{icon("chev-r", "sch-flip", 18)}<span {A("sch.back")}>{T("sch.back")}</span></button>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap sch-how">
+    <h2 {A("sch.how.title")}>{T("sch.how.title")}</h2>
+    <ol class="sch-how__list">{how}</ol>
+  </section>
+
+  <section class="wrap sch-note">
+    <p><b {A("sch.note.title")}>{T("sch.note.title")}</b> <span {A("sch.note.body")}>{T("sch.note.body")}</span>
+      <span class="sch-note__date"><span {A("sch.checked")}>{T("sch.checked")}</span> {S.SCHEMES_CHECKED}</span></p>
+  </section>
+
+  <!-- "Request help applying" — a task for a human, never a form -->
+  <div class="sch-sheet" data-sch-sheet data-open="false" role="dialog" aria-modal="true"
+       aria-labelledby="schSheetTitle" hidden>
+    <div class="sch-sheet__panel">
+      <h3 id="schSheetTitle" {A("sch.help")}>{T("sch.help")}</h3>
+      <p class="sch-sheet__sub" {A("sch.help.sub")}>{T("sch.help.sub")}</p>
+      <p class="sch-sheet__for"><span class="muted small" {A("sch.req.for")}>{T("sch.req.for")}</span> <b data-sch-sheet-scheme></b></p>
+      <div class="sch-sheet__districts" data-sch-districts hidden>
+        <p class="sch-qhint" {A("sch.help.district")}>{T("sch.help.district")}</p>
+        <div class="sch-options sch-options--districts" data-sch-district-list></div>
+      </div>
+      <div class="sch-sakhi" data-sch-sakhi hidden></div>
+      <button class="btn btn--gold btn--block" type="button" data-sch-send disabled>{icon("hand-heart", "", 20)}<span {A("sch.help.confirm")}>{T("sch.help.confirm")}</span></button>
+      <button class="btn btn--ghost btn--block mt-1" type="button" data-sch-cancel>{T("sch.help.cancel")}</button>
+    </div>
+  </div>
+</main>
+'''
+    head_part = head(
+        f"Government Schemes — help applying for Mudra, PM-JAY, SHG loans | {BRAND['name']}",
+        "Answer four questions and see the government schemes you qualify for — Mudra loans, Ayushman Bharat health cover, NRLM women's groups — in Kannada, Hindi or English, with a Sakhi Champion who helps you apply.",
+        "schemes/", u("assets/css/styles.css"), u,
+        [ld_org(), ld_breadcrumb([("Home", ""), ("Government Schemes", route("schemes"))])],
+        extra=(f'<link rel="manifest" href="{u("manifest.webmanifest")}">\n'
+               f'<link rel="apple-touch-icon" href="{u("assets/icons/icon-192.png")}">')
+    )
+    page = head_part + header("nav.schemes", u) + body + footer(u)
+    return page + (f'<script src="{u("assets/js/schemes-data.js")}"></script>'
+                   f'<script src="{u("assets/js/schemes.js")}"></script>') + "</body></html>"
+
+
+def scheme(u, s):
+    """One scheme, one card. Everything a woman needs to act on it."""
+    import schemes as S
+
+    slug = s["slug"]
+    key = lambda f: f"sch.{slug}.{f}"  # noqa: E731
+    # the four lines the phone reads aloud when no recording exists yet
+    script_keys = " ".join(f"sch.{slug}.{f}" for f in ("one_line", "benefit", "who", "how"))
+
+    # ---- what you get: a table for the loan tiers, a list for the rest
+    if s.get("loan_tiers"):
+        rows = "".join(
+            f'''<tr><th scope="row">{E(label)}</th><td {A(key("tier_text." + str(n)))}>{T(key("tier_text." + str(n)))}</td></tr>'''
+            for n, (label, _t) in enumerate(s["loan_tiers"]))
+        gets = f'''<h3 class="sch-h3">{T(key("tiers_title"))}</h3>
+        <div class="sch-tablewrap"><table class="sch-table"><tbody>{rows}</tbody></table></div>'''
+    else:
+        items = s.get("coverage_includes") or s.get("what_it_gives") or []
+        if items:
+            lis = "".join(
+                f'<li>{icon("check", "sch-tick", 18)}<span {A(key(f"{"cover" if s.get("coverage_includes") else "give"}.{n}"))}>'
+                f'{T(key(f"{"cover" if s.get("coverage_includes") else "give"}.{n}"))}</span></li>'
+                for n in range(len(items)))
+            gets = f'<h3 class="sch-h3" {A("sch.gets.title")}>{T("sch.gets.title")}</h3><ul class="sch-list">{lis}</ul>'
+        else:
+            gets = ""
+
+    if s.get("repayment"):
+        gets += (f'<p class="sch-strip">{icon("clock", "sch-strip__ico", 18)}'
+                 f'<span {A(key("repay"))}>{T(key("repay"))}</span></p>')
+
+    # ---- documents as a checklist she can tick (remembered on the phone)
+    if s.get("documents_needed"):
+        docs = "".join(
+            f'''<li><label class="sch-doc">
+              <input type="checkbox" data-doc="{slug}.{n}">
+              <span class="sch-doc__box">{icon("check", "sch-doc__tick", 15)}</span>
+              <span {A(key(f"doc.{n}"))}>{T(key(f"doc.{n}"))}</span>
+            </label></li>''' for n in range(len(s["documents_needed"])))
+        docs_html = f'''<section class="sch-block">
+          <h3 class="sch-h3">{icon("clipboard", "", 20)} <span {A("sch.docs.title")}>{T("sch.docs.title")}</span></h3>
+          <p class="small muted" {A("sch.docs.tick")}>{T("sch.docs.tick")}</p>
+          <ul class="sch-docs">{docs}</ul>
+        </section>'''
+    else:
+        docs_html = ""
+
+    check = ""
+    if s.get("check_first"):
+        check = (f'<p class="sch-caution">{icon("info", "sch-caution__ico", 18)}'
+                 f'<span {A(key("check"))}>{T(key("check"))}</span></p>')
+
+    # ---- explainer: a real file if the content team added one, otherwise the
+    # phone's own voice reads the card aloud. Checked at build time.
+    audio_langs = [lg for lg in ("en", "hi", "kn")
+                   if os.path.exists(os.path.join(ROOT, f"assets/audio/{slug}-{lg}.mp3"))]
+    if audio_langs:
+        # The <audio> element has no source of its own: scripts.js picks the file
+        # for her language (never plays a language she cannot read) and hides the
+        # player when that language has no recording yet.
+        explainer = '''<audio class="sch-audio" data-sch-audio controls preload="none" hidden></audio>'''
+    else:
+        explainer = ""
+    # Always emitted: JS shows it whenever the language she is reading in has no
+    # recording, so the fallback is never invisible. Hidden up front only when a
+    # recording exists for some language.
+    note = (f'<p class="small muted sch-script-note" {A("sch.script.note")}'
+            f'{" hidden" if audio_langs else ""}>{T("sch.script.note")}</p>')
+
+    helpline = ""
+    if s.get("helpline"):
+        num = s["helpline"].split(" ")[0]
+        helpline = f'''<p class="sch-strip sch-strip--call">{icon("phone", "sch-strip__ico", 18)}
+        <a href="tel:{num}">{T(key("helpline"))}</a></p>'''
+
+    body = f'''
+<main id="main" class="sch" data-sch-app data-sch-root="{u('schemes/')}"
+      data-sch-sw="{u('sw.js')}" data-sch-scheme="{slug}"
+      data-sch-audio-base="{u('assets/audio/')}">
+  <section class="wrap sch-cardwrap">
+    <p class="sch-crumb"><a href="{u(route("schemes"))}">{icon("chev-r", "sch-flip", 16)} <span {A("sch.eyebrow")}>{T("sch.eyebrow")}</span></a></p>
+
+    <article class="sch-detail" data-sch-key="{slug}" data-sch-script="{script_keys}">
+      <span class="sch-cat">{icon(s["icon"], "", 16)} {T("sch.cat." + s["cat"])}</span>
+      <h1 data-sch-title {A(key("name"))}>{T(key("name"))}</h1>
+      <p class="sch-oneline" {A(key("one_line"))}>{T(key("one_line"))}</p>
+
+      <div class="sch-benefit">
+        <span class="sch-benefit__label" {A("sch.gets.title")}>{T("sch.gets.title")}</span>
+        <b class="sch-benefit__amount" {A(key("benefit"))}>{T(key("benefit"))}</b>
+      </div>
+
+      {check}
+
+      <div class="sch-detail__actions">
+        <button class="btn btn--green btn--lg btn--block" type="button" data-sch-play>
+          {icon("speaker", "", 20)}<span data-sch-play-label {A("sch.play")}>{T("sch.play")}</span>
+        </button>
+        {explainer}
+        {note}
+        <button class="btn btn--gold btn--lg btn--block" type="button" data-sch-ask>
+          {icon("hand-heart", "", 20)}<span {A("sch.help")}>{T("sch.help")}</span>
+        </button>
+        <p class="small muted sch-help-sub"><span {A("sch.help.sub")}>{T("sch.help.sub")}</span></p>
+      </div>
+
+      {gets}
+
+      <section class="sch-block">
+        <h3 class="sch-h3">{icon("info", "", 20)} <span {A("sch.who.title")}>{T("sch.who.title")}</span></h3>
+        <p {A(key("who"))}>{T(key("who"))}</p>
+      </section>
+
+      {docs_html}
+
+      <section class="sch-block">
+        <h3 class="sch-h3">{icon("bank", "", 20)} <span {A("sch.apply.title")}>{T("sch.apply.title")}</span></h3>
+        <p {A(key("how"))}>{T(key("how"))}</p>
+        {helpline}
+      </section>
+
+      <p class="sch-note sch-note--inline"><b {A("sch.note.title")}>{T("sch.note.title")}</b>
+        <span {A("sch.note.body")}>{T("sch.note.body")}</span></p>
+    </article>
+  </section>
+
+  <div class="sch-sheet" data-sch-sheet data-open="false" role="dialog" aria-modal="true"
+       aria-labelledby="schSheetTitle" hidden>
+    <div class="sch-sheet__panel">
+      <h3 id="schSheetTitle" {A("sch.help")}>{T("sch.help")}</h3>
+      <p class="sch-sheet__sub" {A("sch.help.sub")}>{T("sch.help.sub")}</p>
+      <p class="sch-sheet__for"><span class="muted small" {A("sch.req.for")}>{T("sch.req.for")}</span> <b data-sch-sheet-scheme></b></p>
+      <div class="sch-sheet__districts" data-sch-districts hidden>
+        <p class="sch-qhint" {A("sch.help.district")}>{T("sch.help.district")}</p>
+        <div class="sch-options sch-options--districts" data-sch-district-list></div>
+      </div>
+      <div class="sch-sakhi" data-sch-sakhi hidden></div>
+      <button class="btn btn--gold btn--block" type="button" data-sch-send disabled>{icon("hand-heart", "", 20)}<span {A("sch.help.confirm")}>{T("sch.help.confirm")}</span></button>
+      <button class="btn btn--ghost btn--block mt-1" type="button" data-sch-cancel>{T("sch.help.cancel")}</button>
+    </div>
+  </div>
+</main>
+'''
+    head_part = head(
+        f'{s["name"]} — who qualifies, documents, how to apply | {BRAND["name"]}',
+        f'{s["one_line"]} {s["benefit_amount"]} Check if you qualify and ask a Sakhi Champion to help you apply.',
+        f"schemes/{slug}/", u("assets/css/styles.css"), u,
+        [ld_org(), ld_breadcrumb([("Home", ""), ("Government Schemes", route("schemes")), (s["name"], f"schemes/{slug}/")])],
+        extra=(f'<link rel="manifest" href="{u("manifest.webmanifest")}">\n'
+               f'<link rel="apple-touch-icon" href="{u("assets/icons/icon-192.png")}">')
+    )
+    page = head_part + header("nav.schemes", u) + body + footer(u)
+    return page + (f'<script src="{u("assets/js/schemes-data.js")}"></script>'
+                   f'<script src="{u("assets/js/schemes.js")}"></script>') + "</body></html>"
+
+
+def trainer_notes(u):
+    """Field-team sheet. Not linked from the public site, not indexed.
+
+    Carries the teacher_note that deliberately never appears in the app: it is
+    training guidance ("teach this first"), not something a woman should read.
+    """
+    import schemes as S
+
+    order = ["nrlm-shg", "mudra", "stand-up-india", "ayushman-bharat", "pm-vishwakarma", "odop"]
+    rank = {s: i + 1 for i, s in enumerate(order)}
+    cards = ""
+    for s in sorted(S.SCHEMES, key=lambda x: rank[x["slug"]]):
+        slug = s["slug"]
+        docs = "".join(f'<li>{E(d)}</li>' for d in s.get("documents_needed", [])) or '<li class="muted">—</li>'
+        extra = ""
+        if s.get("loan_tiers"):
+            extra = "<ul>" + "".join(f"<li><b>{E(l)}</b> — {E(t)}</li>" for l, t in s["loan_tiers"]) + "</ul>"
+        if s.get("coverage_includes"):
+            extra = "<p class='small'><b>Covers:</b> " + E(", ".join(s["coverage_includes"])) + "</p>"
+        if s.get("what_it_gives"):
+            extra = "<ul>" + "".join(f"<li>{E(g)}</li>" for g in s["what_it_gives"]) + "</ul>"
+        if s.get("repayment"):
+            extra = f"<p class='small'><b>Repayment:</b> {E(s['repayment'])}</p>"
+        cards += f'''
+<article class="tr-card">
+  <header>
+    <span class="tr-rank">{rank[slug]}</span>
+    <h2>{E(s["name"])} <span class="tr-cat">{E(s["category"])}</span></h2>
+  </header>
+  <p class="tr-oneline">{E(s["one_line"])}</p>
+  <p><b>Benefit:</b> {E(s["benefit_amount"])}</p>
+  {extra}
+  <p><b>Who qualifies:</b> {E(s["who_qualifies"])}</p>
+  <p><b>How to apply:</b> {E(s["how_to_apply"])}</p>
+  {"<p><b>Helpline:</b> " + E(s["helpline"]) + "</p>" if s.get("helpline") else ""}
+  {"<p><b>Check first:</b> " + E(s["check_first"]) + "</p>" if s.get("check_first") else ""}
+  <p><b>Documents:</b></p><ul class="tr-docs">{docs}</ul>
+  <p class="tr-note"><b>Teacher note —</b> {E(s["teacher_note"])}</p>
+  <p class="small muted">App card: <code>schemes/{slug}/</code> · data: <code>_build/schemes.py</code> · id: <code>{s["id"]}</code></p>
+</article>'''
+
+    body = f'''
+<main id="main" class="tr">
+  <section class="wrap tr-head">
+    <span class="eyebrow">Trainer notes</span>
+    <h1>Government schemes — the trainer sheet</h1>
+    <p class="lede">Teaching order, the cautions behind each scheme, and the exact data the app
+      shows. Between the top Nav, Footer and themes we maintain so this matches the cards.</p>
+    <p class="tr-warn"><b>Not for public pages.</b> The teacher notes below are guidance for the
+      field team and are deliberately not rendered inside the app.</p>
+    <p class="small muted">Scheme details checked: {S.SCHEMES_CHECKED} · re-check amounts and
+      eligibility every quarter, they change.</p>
+  </section>
+  <section class="wrap tr-grid">{cards}</section>
+</main>
+'''
+    return head(
+        f"Trainer notes — government schemes | {BRAND['name']}",
+        "Field-team sheet: teaching order, cautions and scheme data for the ApnaPan government schemes app.",
+        "schemes/trainer-notes/", u("assets/css/styles.css"), u,
+        None, extra='<meta name="robots" content="noindex, nofollow">'
+    ) + header("", u) + body + footer(u) + "</body></html>"

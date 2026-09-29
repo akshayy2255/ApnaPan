@@ -1,0 +1,32 @@
+{
+  "name": "ApnaPan — Government Schemes",
+  "short_name": "ApnaPan Schemes",
+  "description": "Find the government schemes you qualify for, in Kannada, Hindi or English.",
+  "start_url": "./schemes/",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F7F3EC",
+  "theme_color": "#1e4436",
+  "lang": "en-IN",
+  "icons": [
+    {
+      "src": "assets/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

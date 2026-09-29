@@ -18,6 +18,7 @@ STR = {
     "nav.story":           ("Our Story", "ನಮ್ಮ ಕಥೆ", "हमारी कहानी"),
     "nav.impact":          ("Our Impact", "ನಮ್ಮ ಪ್ರಭಾವ", "हमारा प्रभाव"),
     "nav.shop":            ("Shop", "ಖರೀದಿಸಿ", "ख़रीदें"),
+    "nav.schemes":         ("Government Schemes", "ಸರ್ಕಾರಿ ಯೋಜನೆಗಳು", "सरकारी योजनाएँ"),
     "nav.about": ("About", "ನಮ್ಮ ಬಗ್ಗೆ", "हमारे बारे में"),
     "nav.how":             ("How It Works", "ಇದು ಹೇಗೆ ನಡೆಯುತ್ತದೆ", "यह कैसे होता है"),
     "nav.farmers":         ("For Farmers", "ರೈತರಿಗಾಗಿ", "किसानों के लिए"),
@@ -478,6 +479,16 @@ EXTRA_STR = {
 }
 
 STR.update(EXTRA_STR)
+
+
+# ------------------------------------------------------- government schemes
+# The /schemes/ section keeps its own content and translations together in
+# _build/schemes.py; they are merged here so one build still serves every
+# language through the normal data-i18n mechanism.
+from schemes import strings as _scheme_strings, state_strings as _state_strings
+
+STR.update(_scheme_strings())
+STR.update(_state_strings())
 
 
 def tree():

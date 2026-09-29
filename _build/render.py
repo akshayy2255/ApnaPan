@@ -86,6 +86,13 @@ ICONS = {
     "sunrise": '<path d="M12 3v5M5.6 9.6 7 11M18.4 9.6 17 11M2 18h20M4.5 21h15"/><path d="M8 15a4 4 0 0 1 8 0"/>',
     "sparkle": '<path d="M12 3v6M12 15v6M3 12h6M15 12h6M6.3 6.3l3 3M14.7 14.7l3 3M17.7 6.3l-3 3M9.3 14.7l-3 3"/>',
     "info": '<circle cx="12" cy="12" r="9"/><path d="M12 11v5.5M12 7.6v.1"/>',
+    "briefcase": '<rect x="2.5" y="7" width="19" height="13" rx="2.2"/><path d="M8.5 7V5.6A2 2 0 0 1 10.5 4h3a2 2 0 0 1 2 1.6V7M2.5 12h19"/>',
+    "hospital": '<path d="M4 21V8.5A1.5 1.5 0 0 1 5.5 7h13A1.5 1.5 0 0 1 20 8.5V21M2.5 21h19M12 10.5v6M9 13.5h6"/>',
+    "speaker": '<path d="M11 5 6.5 9H3v6h3.5L11 19z"/><path d="M15.5 8.8a4.5 4.5 0 0 1 0 6.4M18.4 6.2a8.2 8.2 0 0 1 0 11.6"/>',
+    "bank": '<path d="M3.5 9.5 12 4l8.5 5.5M5.5 10v8M9.5 10v8M14.5 10v8M18.5 10v8M3 20.5h18"/>',
+    "clipboard": '<path d="M9 4.5h6M8 6.5H6.5A1.5 1.5 0 0 0 5 8v11.5A1.5 1.5 0 0 0 6.5 21h11A1.5 1.5 0 0 0 19 19.5V8a1.5 1.5 0 0 0-1.5-1.5H16"/><rect x="8" y="3" width="8" height="3.4" rx="1.2"/>',
+    "idcard": '<rect x="2.5" y="5" width="19" height="14" rx="2.2"/><circle cx="8.6" cy="11" r="2.1"/><path d="M5.4 16.4c.7-1.4 1.9-2.1 3.2-2.1s2.5.7 3.2 2.1M14.6 10h4M14.6 13.4h4"/>',
+    "cloud-off": '<path d="M6.5 18h10a3.5 3.5 0 0 0 .7-6.9 5.5 5.5 0 0 0-8.9-2.4M6.4 9.3A4.8 4.8 0 0 0 7.8 18M2.5 2.5l19 19"/>',
     "megaphone": '<path d="M3 10.5v3l11 5V5.5z"/><path d="M14 8.5a3.5 3.5 0 0 1 0 7"/><path d="M6.5 14v4.5a1.5 1.5 0 0 0 3 0V15.5"/>',
 }
 
@@ -149,6 +156,8 @@ ROUTES = {
     "blog":     "blog/",
     "contact":  "contact/",
     "checkout": "checkout/",
+    "schemes":  "schemes/",
+    "trainers": "schemes/trainer-notes/",
     "notfound": "404.html",
 }
 
@@ -165,6 +174,10 @@ def post_route(slug):
     return f"blog/{slug}/"
 
 
+def scheme_route(slug):
+    return f"schemes/{slug}/"
+
+
 def page_path(name, slug=None):
     """Where a page is written on disk (relative to the site root)."""
     if name == "notfound":
@@ -174,6 +187,8 @@ def page_path(name, slug=None):
         return (p + "index.html") if p else "index.html"
     if name == "product":
         return f"products/{slug}/index.html"
+    if name == "scheme":
+        return f"schemes/{slug}/index.html"
     if name == "post":
         return f"blog/{slug}/index.html"
     raise KeyError(name)
@@ -409,7 +424,8 @@ def footer(u):
         f'<li><a href="{u(route(h))}" {A(k)}>{T(k)}</a></li>'
         for k, h in [("nav.story", "story"), ("nav.impact", "impact"),
                      ("nav.how", "how"), ("nav.blog", "blog")])
-    co_links = [("nav.farmers", "farmers"), ("nav.careers", "careers"), ("nav.contact", "contact")]
+    co_links = [("nav.farmers", "farmers"), ("nav.schemes", "schemes"),
+                ("nav.careers", "careers"), ("nav.contact", "contact")]
     company = "".join(f'<li><a href="{u(route(h))}" {A(k)}>{T(k)}</a></li>' for k, h in co_links)
     socials = "".join(
         f'<a href="{s["url"]}" rel="noopener" aria-label="{s["name"]}" target="_blank">{icon(SOCIAL_ICON.get(s["icon"], "globe"))}</a>'

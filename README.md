@@ -101,11 +101,15 @@ apnapan/
 │   ├── fonts/*.woff2          7 files, 404 KB total
 │   ├── js/app.js              Cart, filters, tabs, counters, forms, checkout, nav/drawer/dropdown
 │   ├── js/i18n.js             Language switcher (writes <html data-lang-active>)
-│   ├── js/i18n-data.js        Generated translations (320 strings × 3 languages)
+│   ├── js/i18n-data.js        Generated translations (506 strings × 3 languages)
+│   ├── js/schemes-data.js     Generated scheme + quiz data for /schemes/ (works offline)
+│   ├── js/schemes.js          The schemes app: quiz, matching, help queue, explainer
+│   ├── icons/                 App icons (192/512) for installing the schemes section
 │   ├── js/data.js             Generated product catalogue + store config
 │   └── images/                16 images (hero, farm, factory, lab, children, 8 packshots)
 └── _build/                    The generator — edit content here, then rebuild
     ├── content.py             ← ALL products, people, numbers, jobs, posts, FAQs
+    ├── schemes.py             ← ALL 6 government schemes + the quiz + the field team
     ├── i18n.py                ← ALL interface strings (en / kn / hi)
     ├── render.py              Routes, URLs, icons, page chrome, shared components (incl. the header)
     │                          NAV lives in content.py: an entry with "children" becomes a
@@ -131,7 +135,9 @@ every nav/footer/sitemap reference follows.
 python3 -m pip install playwright && python3 -m playwright install chromium
 cd apnapan && python3 serve.py 8000 --no-open &     # any static server works
 python3 _build/test_header.py     # 122 checks — header, nav, About group, drawer, keyboard, a11y, theme
-python3 _build/test_site.py       # 216 checks — all 24 pages, links, cart, checkout, languages
+python3 _build/test_schemes.py    # 114 checks — schemes quiz, matching, offline queue, help flow
+python3 _build/test_explainer.py  #  24 checks — recordings: plays the right file, caches it, falls back
+python3 _build/test_site.py       # 272 checks — all 31 pages, links, cart, checkout, languages
 python3 _build/audit_contrast.py  # WCAG contrast of every text element, both themes
 ```
 
@@ -162,6 +168,9 @@ It rewrites every HTML page, `sitemap.xml`, `robots.txt`, `assets/js/data.js` an
 | Any interface text (in all three languages) | `_build/i18n.py` → `STR` / `EXTRA_STR` |
 | Free-shipping threshold, COD fee, school-fund %, Razorpay key | `_build/build.py` → `js_data()` |
 | The top navigation (order, labels, grouping, footer column) | `_build/content.py` → `NAV` |
+| Government schemes: text, documents, amounts, cautions | `_build/schemes.py` → `SCHEMES` |
+| The four quiz questions and their answers | `_build/schemes.py` → `QUIZ`, `QUIZ_OPTIONS` |
+| Sakhi Champions and the districts they cover | `_build/schemes.py` → `COORDINATORS`, `DISTRICTS` |
 | Colours, spacing, typography | `assets/css/styles.css` → `:root` tokens at the top |
 
 ### The navigation
@@ -184,6 +193,65 @@ in the mobile drawer it is a **collapsible list**, because there is no hover on 
 screen. The four pages are also linked in the footer's **About Us** column, so they are
 reachable without the dropdown. Renaming or adding a group means adding one entry to `NAV`
 plus its label in `_build/i18n.py` — no template or CSS changes.
+
+---
+
+## 3b. The Government Schemes section
+
+`/schemes/` is a three-screen flow for a woman on a phone, in her language, with or
+without network:
+
+1. **Four tap questions** — state, business, what she needs, bank account. No typing
+   anywhere: every answer is a button, and single-answer questions advance by
+   themselves. Matching happens in the browser, so the quiz works offline.
+2. **Only 2-3 schemes**, never the full list. She is always shown what she asked for
+   (a loan request always returns a loan scheme), health cover always brings PM-JAY,
+   and every card says *why* it was picked. If fewer than two match, the two
+   near-universal schemes fill the gap.
+3. **"Request help applying"** — this is deliberately *not* a form. It creates a task
+   for the Sakhi Champion who covers her district: her name, number, what she covers
+   and a one-tap WhatsApp handoff. Requests made offline are kept on the phone and
+   posted when it is back online.
+
+    /schemes/                     the quiz, results and "My requests"
+    /schemes/<slug>/              one card: benefit, what you get, documents, how to apply
+    /schemes/trainer-notes/       field-team sheet — teacher notes, noindex, not linked
+
+**Content.** Everything lives in `_build/schemes.py`, one dict per scheme in the shape
+the content team maintains it (`id, category, one_line, benefit_amount, who_qualifies,
+documents_needed, how_to_apply, helpline, teacher_note` plus per-scheme extras).
+Two rules in that file matter:
+
+* `teacher_note` is trainer material. It is **never rendered in the app** — it appears
+  only on `/schemes/trainer-notes/` (noindex). Guidance like "teach this first" is for
+  the field team, not for her.
+* Where eligibility is genuinely uncertain — Vishwakarma trade lists, ODOP district
+  product lists — the scheme carries a `check_first` line, and the app shows
+  "ask your Sakhi to check first" instead of promising it.
+
+**The explainer.** Drop recordings at `assets/audio/<slug>-<lang>.mp3`
+(e.g. `mudra-kn.mp3`, `mudra-hi.mp3`), rebuild, and the cards play them. The
+languages you have are read at build time, so the app never requests a file that
+isn't there and never plays a language she can't read: if her language has no
+recording yet, the card says so and the phone reads the card aloud instead. Scripts
+are the card's own four lines, so whoever records only has to read what is already
+on screen — and the recording works offline too, because it is cached with the rest.
+
+    python3 _build/test_explainer.py   # proves the above, then removes its own test file
+
+**Where requests go.** Set `helpEndpoint` in `_build/build.py` → `js_data()` to your
+endpoint and every request is POSTed there as JSON (`{slug, scheme, district, sakhi,
+at, status, lang}`); it is marked sent only when the server accepts it, and retried
+until then. It can also be set at runtime without a rebuild by putting the URL in
+`localStorage.apnapan_help_endpoint`. Left empty, the section runs in demo mode: the
+request stays on the phone and the app offers the WhatsApp/call handoff to her Sakhi.
+The five Sakhi Champions in `COORDINATORS` are **sample data with demo phone
+numbers** — replace them with your real roster.
+
+**Offline.** `sw.js`, the manifest and the icons are generated at build time, so the
+precache list can never drift from the real routes. The quiz, the cards, the document
+ticks and the request queue all work with no network; the app says "Offline — cards
+saved on this phone" rather than pretending.
 
 ---
 

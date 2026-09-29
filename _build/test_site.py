@@ -10,6 +10,8 @@ PAGES = ["/", "/our-story/", "/our-impact/", "/shop/", "/how-it-works/", "/for-f
 _root = os.path.normpath(os.path.join(os.path.dirname(__file__), ".."))
 PAGES += ["/products/" + os.path.basename(os.path.dirname(p)) + "/"
           for p in sorted(glob.glob(os.path.join(_root, "products", "*", "index.html")))]
+PAGES += ["/schemes/"] + ["/schemes/" + s + "/" for s in
+          ("mudra", "stand-up-india", "ayushman-bharat", "nrlm-shg", "pm-vishwakarma", "odop")]
 PAGES += ["/blog/" + s + "/" for s in ("why-we-pay-farmers-above-mandi-price", "inside-the-class-10-fund",
                                        "byadagi-chilli-guide", "mavina-midi-pickle-calendar",
                                        "what-women-led-means-in-a-factory")]
